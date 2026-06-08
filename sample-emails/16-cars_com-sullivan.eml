@@ -1,0 +1,58 @@
+From: "Cars.com Leads" <leads@cars.com>
+To: sales@dealership.com
+Subject: Cars.com Inquiry: 2021 Mercedes-Benz C 300 4MATIC
+Date: Tue, 02 Jun 2026 01:00:00 GMT
+Message-ID: <1000015.1780872070766@cars.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#f5f5f5;margin:0;padding:0}
+.container{max-width:600px;margin:16px auto;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.top-bar{background:#E11B22;height:6px}
+.header{padding:20px 28px 12px;border-bottom:1px solid #eee}
+.logo-text{font-size:22px;font-weight:900;color:#E11B22;letter-spacing:-1px}
+.logo-text span{color:#222}
+.tag{display:inline-block;background:#E11B22;color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:3px;margin-left:8px;vertical-align:middle}
+.content{padding:20px 28px}
+h3{margin:0 0 12px;font-size:15px;color:#333}
+table{width:100%;border-collapse:collapse;margin-bottom:16px}
+td{padding:7px 10px;font-size:13px;border-bottom:1px solid #f0f0f0}
+td:first-child{color:#777;width:140px}
+td:last-child{font-weight:600;color:#222}
+.highlight-row td{background:#fef9ec}
+.msg{background:#f7f7f7;border-radius:4px;padding:14px;font-size:13px;color:#444;line-height:1.6;margin-top:8px}
+.footer{background:#f9f9f9;padding:12px 28px;font-size:11px;color:#999;border-top:1px solid #eee}
+</style></head>
+<body>
+<div class="container">
+  <div class="top-bar"></div>
+  <div class="header">
+    <div class="logo-text">cars<span>.com</span><span class="tag">NEW LEAD</span></div>
+  </div>
+  <div class="content">
+    <h3>Vehicle Inquiry Details</h3>
+    <table>
+      <tr><td>Vehicle</td><td>2021 Mercedes-Benz C 300 4MATIC</td></tr>
+      <tr class="highlight-row"><td>VIN</td><td>W1KWF8EB0MR565432</td></tr>
+      <tr><td>Stock #</td><td>MB21-5432</td></tr>
+      <tr><td>Listed Price</td><td>$39,400</td></tr>
+      <tr><td>Mileage</td><td>27,100 miles</td></tr>
+      <tr><td>Exterior Color</td><td>Polar White</td></tr>
+    </table>
+    <h3>Buyer Information</h3>
+    <table>
+      <tr><td>Full Name</td><td>Megan Sullivan</td></tr>
+      
+      <tr><td>Phone</td><td>(651) 555-0509</td></tr>
+      <tr><td>Contact Pref.</td><td>Phone</td></tr>
+    </table>
+    <h3>Message from Buyer</h3>
+    <div class="msg">I'm interested in this one — I tried calling earlier but couldn't get through. Please have someone contact me at the number on file. Best time to reach me is after 5 PM.</div>
+  </div>
+  <div class="footer">Ref: CRS-01000015 &bull; Tue, 02 Jun 2026 01:00:00 GMT &bull; Cars.com, 175 W. Jackson Blvd., Chicago, IL 60604</div>
+</div>
+</body></html>

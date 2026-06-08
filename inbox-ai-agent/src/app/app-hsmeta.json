@@ -1,0 +1,40 @@
+{
+  "uid": "inbox_ai_agent_app",
+  "type": "app",
+  "config": {
+    "name": "Inbox Agent",
+    "description": "Converts inbound emails in HubSpot Conversations Inbox into structured Contact records using AI extraction.",
+    "distribution": "marketplace",
+    "auth": {
+      "type": "oauth",
+      "redirectUrls": [
+        "https://inbox-agent-483790599125.us-central1.run.app/oauth/callback"
+      ],
+      "requiredScopes": [
+        "oauth",
+        "conversations.read",
+        "conversations.write",
+        "crm.objects.contacts.read",
+        "crm.objects.contacts.write",
+        "crm.objects.owners.read",
+        "crm.schemas.contacts.write"
+      ],
+      "optionalScopes": [],
+      "conditionallyRequiredScopes": []
+    },
+    "permittedUrls": {
+      "fetch": [
+        "https://api.hubapi.com",
+        "https://inbox-agent-483790599125.us-central1.run.app"
+      ],
+      "iframe": [],
+      "img": []
+    },
+    "support": {
+      "supportEmail": "support@redanthos.com",
+      "documentationUrl": "https://redanthos.com/inbox-ai-agent/docs",
+      "supportUrl": "https://redanthos.com/support",
+      "supportPhone": "+18005555555"
+    }
+  }
+}

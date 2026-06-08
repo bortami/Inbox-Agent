@@ -1,0 +1,58 @@
+From: "Edmunds Lead" <leads@edmunds.com>
+To: internet@dealership.com
+Subject: Edmunds.com — Price Quote Request: 2023 Mazda CX-5 Carbon Edition
+Date: Thu, 11 Jun 2026 18:00:00 GMT
+Message-ID: <1000049.1780872070768@edmunds.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#f8f8f8}
+.shell{max-width:600px;margin:20px auto;background:#fff;border:1px solid #ddd;border-radius:4px}
+.topstrip{background:#F5821F;height:5px}
+.h{padding:16px 22px;background:#fff;border-bottom:2px solid #F5821F;display:flex;align-items:center;gap:12px}
+.h-logo{font-size:22px;font-weight:900;color:#F5821F}
+.h-title{font-size:13px;color:#555}
+.tbl{width:100%;border-collapse:collapse;margin:0}
+.tbl th{background:#F5821F;color:#fff;font-size:11px;text-align:left;padding:9px 16px;letter-spacing:.3px}
+.tbl td{padding:9px 16px;font-size:13px;border-bottom:1px solid #eee;vertical-align:top}
+.tbl td:first-child{width:40%;color:#777;font-weight:normal}
+.tbl td:last-child{font-weight:600;color:#111}
+.mono{font-family:monospace;font-size:12px;background:#f5f5f5;padding:1px 5px;border-radius:2px}
+.msgblock{padding:18px 22px;background:#fff9f4;border-top:1px solid #f0e0d0}
+.msgtitle{font-size:12px;font-weight:bold;color:#F5821F;text-transform:uppercase;margin-bottom:8px}
+.msgtext{font-size:13px;color:#444;line-height:1.65}
+.foot{padding:10px 22px;background:#F5821F;font-size:11px;color:rgba(255,255,255,.8)}
+</style></head>
+<body>
+<div class="shell">
+  <div class="topstrip"></div>
+  <div class="h">
+    <div class="h-logo">Edmunds</div>
+    <div class="h-title">New Price Quote Request — Thu, 11 Jun 2026 18:00:00 GMT</div>
+  </div>
+  <table class="tbl">
+    <tr><th colspan="2">Vehicle Information</th></tr>
+    <tr><td>Vehicle</td><td>2023 Mazda CX-5 Carbon Edition</td></tr>
+    <tr><td>VIN</td><td><span class="mono">JM3KFBCM4P0172549</span></td></tr>
+    <tr><td>Stock Number</td><td>MC23-2549</td></tr>
+    <tr><td>Listed Price</td><td>$34,250</td></tr>
+    <tr><td>Mileage</td><td>8,900 miles</td></tr>
+    <tr><td>Exterior</td><td>Soul Red Crystal</td></tr>
+    <tr><th colspan="2">Customer Information</th></tr>
+    <tr><td>Name</td><td>Cheryl Benson</td></tr>
+    <tr><td>Email</td><td>cheryl.benson@me.com</td></tr>
+    <tr><td>Phone</td><td>(904) 555-0673</td></tr>
+    <tr><td>Lead Source</td><td>Edmunds.com</td></tr>
+    <tr><td>Reference ID</td><td>EDM-01000049</td></tr>
+  </table>
+  <div class="msgblock">
+    <div class="msgtitle">Customer Message</div>
+    <div class="msgtext">"I'm interested in financing options. Do you work with my credit union or only your in-house financing? I'd like to know the monthly payment on this vehicle."</div>
+  </div>
+  <div class="foot">Edmunds &bull; Santa Monica, CA &bull; edmunds.com &bull; Ref: EDM-01000049</div>
+</div>
+</body></html>

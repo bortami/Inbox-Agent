@@ -1,0 +1,54 @@
+From: "CarGurus Lead" <leads@cargurus.com>
+To: sales@dealership.com
+Subject: New Lead: 2023 Kia Telluride SX — Marcus Jefferson
+Date: Sat, 30 May 2026 22:00:00 GMT
+Message-ID: <1000008.1780872070765@cargurus.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{font-family:Arial,sans-serif;color:#222;font-size:14px;margin:0;padding:0;background:#f4f4f4}
+.wrapper{max-width:640px;margin:20px auto;background:#fff;border:1px solid #ddd;border-radius:4px}
+.header{background:#00A0DC;padding:16px 24px;border-radius:4px 4px 0 0}
+.header img{height:28px}
+.header-title{color:#fff;font-size:18px;font-weight:bold;margin-top:8px}
+.body{padding:24px}
+.section-title{font-size:12px;font-weight:bold;color:#666;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px}
+.field-row{display:flex;margin-bottom:6px}
+.field-label{width:160px;color:#666;font-size:13px;flex-shrink:0}
+.field-value{color:#222;font-size:13px;font-weight:600}
+.vehicle-box{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:4px;padding:14px 18px;margin-bottom:16px}
+.vehicle-title{font-size:16px;font-weight:bold;color:#00A0DC}
+.message-box{background:#fffbe6;border-left:4px solid #FFB800;padding:12px 16px;margin:16px 0;font-style:italic;color:#444}
+.footer{background:#f0f0f0;padding:12px 24px;font-size:11px;color:#888;border-radius:0 0 4px 4px}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="header-title">CarGurus — New Lead Notification</div>
+  </div>
+  <div class="body">
+    <div class="section-title">Vehicle of Interest</div>
+    <div class="vehicle-box">
+      <div class="vehicle-title">2023 Kia Telluride SX</div>
+      <div class="field-row"><span class="field-label">VIN:</span><span class="field-value">5XYP5DHC3PG237619</span></div>
+      <div class="field-row"><span class="field-label">Stock #:</span><span class="field-value">KT23-7619</span></div>
+      <div class="field-row"><span class="field-label">Price:</span><span class="field-value">$45,100</span></div>
+      <div class="field-row"><span class="field-label">Color:</span><span class="field-value">Snow White Pearl</span></div>
+      <div class="field-row"><span class="field-label">Mileage:</span><span class="field-value">4,400 mi</span></div>
+    </div>
+    <div class="section-title">Lead Information</div>
+    <div class="field-row"><span class="field-label">Name:</span><span class="field-value">Marcus Jefferson</span></div>
+    <div class="field-row"><span class="field-label">Email:</span><span class="field-value">mjefferson77@aol.com</span></div>
+    <div class="field-row"><span class="field-label">Phone:</span><span class="field-value">(312) 555-0445</span></div>
+    <div class="field-row"><span class="field-label">Lead Type:</span><span class="field-value">Price Quote Request</span></div>
+    <div class="field-row"><span class="field-label">Source:</span><span class="field-value">CarGurus.com</span></div>
+    <div class="section-title">Customer Message</div>
+    <div class="message-box">"I just moved to the area and need reliable transportation quickly. Is this still on the lot? I can come today if needed."</div>
+  </div>
+  <div class="footer">This lead was generated via CarGurus.com. Lead ID: CG-1000008. Sat, 30 May 2026 22:00:00 GMT</div>
+</div>
+</body></html>

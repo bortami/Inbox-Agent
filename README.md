@@ -1,29 +1,18 @@
 # Inbox-Agent
 
-A HubSpot public app that turns inbound emails into structured CRM Leads.
+A HubSpot public app that turns inbound emails into structured Contact records.
 
-When a new email lands in a connected HubSpot Conversations Inbox, a Cloudflare Worker receives the webhook, an AI extractor (Claude) parses the email body into typed fields, and a Contact + Lead is written into the HubSpot CRM — optionally associated to the Listing the inquiry is about.
+When a new email lands in a connected HubSpot Conversations Inbox, a Cloud Run service receives the webhook, an AI model extracts structured data from the email body, and a Contact is upserted in HubSpot — with source attribution as custom properties and a Timeline Event appended for full inquiry history. Works in any HubSpot tier with no custom objects required.
 
-Built initially for car and boat dealers whose listings are syndicated across many third-party sites (CarGurus, Boat Trader, Facebook Marketplace, dealer-site forms, etc.) and who need every inbound email consolidated as a properly-attributed Lead.
+Built initially for car and boat dealers whose listings are syndicated across many third-party sites (CarGurus, Boat Trader, Facebook Marketplace, dealer-site forms, etc.) and who need every inbound email consolidated as a properly-attributed contact.
 
 See [planning.md](planning.md) for the full spec and [todo.md](todo.md) for the build plan.
 
 ## Stack
 
-- **Runtime:** Cloudflare Workers (TypeScript)
-- **State:** Cloudflare D1 (per-portal OAuth tokens, dedupe ledger, audit log)
-- **AI:** Anthropic Claude API (Sonnet 4.6) with structured JSON output
-- **HubSpot:** public app, OAuth, subscribed to `conversation.newMessage`
-
-## Local development
-
-Wrangler-based, standard Cloudflare Workers workflow:
-
-    npm install
-    npx wrangler dev
-
-## Deploy
-
-    npx wrangler deploy
-
-Secrets (HubSpot client secret, app webhook secret, Anthropic API key) are set via `wrangler secret put`.
+- **Runtime:** Node.js/TypeScript on Google Cloud Run
+- **Queue:** Google Cloud Tasks (async webhook processing)
+- **State:** Firestore (per-portal OAuth tokens, dedupe ledger, audit log)
+- **Secrets:** GCP Secret Manager
+- **AI:** Claude (Sonnet 4.6) or Gemini (2.0 Flash) — abstracted, switchable via env var
+- **HubSpot:** Public app, OAuth 2.0, subscribed to `conversation.newMessage`

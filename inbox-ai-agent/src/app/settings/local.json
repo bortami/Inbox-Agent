@@ -1,0 +1,5 @@
+{
+  "proxy": {
+    "https://inbox-agent-483790599125.us-central1.run.app": "http://localhost:8080"
+  }
+}

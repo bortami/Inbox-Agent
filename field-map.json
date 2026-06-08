@@ -1,0 +1,270 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Field mapping and definitions for Inbox-Agent. Covers the AI extraction schema, HubSpot Contact properties, Firestore document shapes, and Note engagement structure.",
+
+  "extractionSchema": {
+    "description": "JSON schema enforced on every AI model call (ClaudeExtractor / GeminiExtractor). Low-confidence or non-lead results are logged only — never written to HubSpot.",
+    "fields": {
+      "firstname": {
+        "type": "string | null",
+        "description": "Lead's first name extracted from the email body or signature."
+      },
+      "lastname": {
+        "type": "string | null",
+        "description": "Lead's last name extracted from the email body or signature."
+      },
+      "email": {
+        "type": "string | null",
+        "description": "Lead's email address. Will be extracted from the body and not the email headers."
+      },
+      "phone": {
+        "type": "string | null",
+        "description": "Lead's phone number, any format, as extracted. Null if not present."
+      },
+      "message": {
+        "type": "string | null",
+        "description": "The freeform buyer question or message, cleaned of boilerplate."
+      },
+      "listing_reference": {
+        "type": "object | null",
+        "description": "Structured reference to the vehicle or listing the lead is enquiring about. Null if the email has no listing context.",
+        "properties": {
+          "vin": {
+            "type": "string",
+            "description": "Vehicle Identification Number (17-char alphanumeric) if present."
+          },
+          "stock_number": {
+            "type": "string",
+            "description": "Dealer stock number or inventory ID if present."
+          },
+          "url": {
+            "type": "string",
+            "description": "Full listing URL (e.g. cargurus.com/...listing/...) if present."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable listing title (e.g. '2022 Toyota Camry LE') if present."
+          },
+          "referring_site": {
+            "type": "string | null",
+            "description": "The classified site or source the listing is from, if it can be determined (e.g. 'CarGurus', 'AutoTrader')."
+          },
+          "year": {
+            "type": "number",
+            "description": "Vehicle model year if it can be extracted."
+          },
+          "make": {
+            "type": "string",
+            "description": "Vehicle make (brand) if it can be extracted."
+          },
+          "model": {
+            "type": "string",
+            "description": "Vehicle model if it can be extracted."
+        }
+      },
+      "is_actual_lead": {
+        "type": "boolean",
+        "description": "True only when the email represents a genuine buyer enquiry. False for listing-view notifications, dealer-to-dealer messages, vendor outreach, and marketing noise.",
+        "required": true
+      },
+      "confidence": {
+        "type": "string",
+        "enum": ["high", "medium", "low"],
+        "description": "Model confidence in the extraction. 'low' or 'medium + is_actual_lead=false' suppresses record creation.",
+        "required": true
+      }
+    }
+  },
+
+  "hubspot": {
+    "contactProperties": {
+      "standard": {
+        "description": "Built-in HubSpot Contact properties. Always upserted when a lead is matched.",
+        "fields": {
+          "firstname": {
+            "hubspotName": "firstname",
+            "type": "string",
+            "source": "extractionSchema.firstname"
+          },
+          "lastname": {
+            "hubspotName": "lastname",
+            "type": "string",
+            "source": "extractionSchema.lastname"
+          },
+          "email": {
+            "hubspotName": "email",
+            "type": "string",
+            "source": "extractionSchema.email",
+            "note": "Used as the upsert key for Contact deduplication."
+          },
+          "phone": {
+            "hubspotName": "phone",
+            "type": "string",
+            "source": "extractionSchema.phone"
+          }
+        }
+      },
+      "custom": {
+        "description": "Custom properties registered under the 'inbox_agent' property group on app install (crm.schemas.contacts.write). All names are prefixed 'inbox_agent_'. Overwritten with the latest inquiry on every processed email.",
+        "propertyGroup": "inbox_agent",
+        "registeredBy": "ensureInboxAgentProperties() called from OAuth callback; idempotent (409 = skip).",
+        "fields": {
+          "inbox_agent_lead_source": {
+            "hubspotName": "inbox_agent_lead_source",
+            "type": "string",
+            "description": "Specific source label for the most recent enquiry (e.g. 'CarGurus', 'Boat Trader', 'Dealer Site Form', 'Unknown'). Set by the source classifier.",
+            "source": "extractionSchema.listing_reference.referring_site or sourceClassifier.sourceLabel"
+          },
+          "inbox_agent_inquiry_message": {
+            "hubspotName": "inbox_agent_inquiry_message",
+            "type": "string",
+            "description": "Freeform buyer question or message from the most recent processed email.",
+            "source": "extractionSchema.message"
+          },
+          "inbox_agent_listing_ref": {
+            "hubspotName": "inbox_agent_listing_ref",
+            "type": "string",
+            "description": "Serialized listing reference (VIN, year, make, model, and listing URL) from the most recent email. Null/empty if no listing context was extracted.",
+            "source": "extractionSchema.listing_reference"
+          },
+          "inbox_agent_processed_at": {
+            "hubspotName": "inbox_agent_processed_at",
+            "type": "string (ISO 8601)",
+            "description": "Timestamp of the most recently processed email for this Contact.",
+            "source": "system"
+          }
+        }
+      }
+    },
+    "noteEngagement": {
+      "description": "One Note engagement posted per processed email via POST /crm/objects/2026-03/notes. Associated to the Contact at creation time via the associations array. Provides full inquiry history on the Contact timeline.",
+      "fields": {
+        "hs_note_body": {
+          "hubspotName": "hs_note_body",
+          "type": "string",
+          "description": "Plain-text note body. Contains: source label, buyer message, listing reference, extraction confidence, and HubSpot Conversations thread URL."
+        },
+        "hs_timestamp": {
+          "hubspotName": "hs_timestamp",
+          "type": "number (Unix ms)",
+          "description": "Epoch milliseconds at time of processing. Determines where the Note appears on the timeline."
+        }
+      },
+      "associations": {
+        "contactId": {
+          "type": "string",
+          "description": "HubSpot Contact record ID. Must be resolved from the upsert response before posting the Note."
+        }
+      }
+    }
+  },
+
+  "firestore": {
+    "description": "Three top-level Firestore collections. All use native mode.",
+    "collections": {
+      "/portals/{portal_id}": {
+        "description": "One document per installed HubSpot portal. Created/updated during OAuth callback.",
+        "keyFormat": "HubSpot portal ID (numeric string)",
+        "fields": {
+          "access_token": {
+            "type": "string",
+            "description": "Current HubSpot OAuth access token for this portal."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "HubSpot OAuth refresh token. Used to obtain a new access token when expired."
+          },
+          "expires_at": {
+            "type": "number (Unix ms)",
+            "description": "Epoch ms when the access token expires. Refresh proactively before this time."
+          },
+          "installed_at": {
+            "type": "string (ISO 8601)",
+            "description": "Timestamp when the app was first installed on this portal."
+          },
+          "app_id": {
+            "type": "string",
+            "description": "HubSpot app ID — used to scope webhook and app-event operations."
+          }
+        }
+      },
+      "/dedupeKeys/{dedupe_key}": {
+        "description": "Deduplication ledger. Key is email + listing_ref + bucketed_timestamp. Firestore TTL policy auto-expires documents after 24 h — no manual cleanup needed.",
+        "keyFormat": "SHA-256 or deterministic hash of (email + listing_ref + time_bucket_epoch_ms)",
+        "ttlField": "created_at",
+        "ttlDuration": "24 hours",
+        "fields": {
+          "portal_id": {
+            "type": "string",
+            "description": "HubSpot portal ID the duplicate key belongs to."
+          },
+          "message_id": {
+            "type": "string",
+            "description": "HubSpot Conversations message ID that first triggered this dedupe key."
+          },
+          "created_at": {
+            "type": "Firestore Timestamp",
+            "description": "Creation time. Used by the Firestore TTL policy for 24 h auto-expiry."
+          }
+        }
+      },
+      "/auditLog/{auto_id}": {
+        "description": "One document per webhook processed, regardless of outcome. Enables replay and human review.",
+        "keyFormat": "Firestore auto-generated ID",
+        "fields": {
+          "portal_id": {
+            "type": "string",
+            "description": "HubSpot portal ID the webhook came from."
+          },
+          "message_id": {
+            "type": "string",
+            "description": "HubSpot Conversations message ID from the webhook payload."
+          },
+          "source_classified": {
+            "type": "string",
+            "description": "Source label assigned by the source classifier (e.g. 'CarGurus', 'unknown')."
+          },
+          "extraction_json": {
+            "type": "object",
+            "description": "The raw extraction schema object returned by the AI model.",
+            "ref": "extractionSchema"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Confidence value from the extraction, mirrored here for quick querying."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["created", "updated", "skipped", "errored", "queued-for-review"],
+            "description": "Result of processing: 'created' = new Contact; 'updated' = existing Contact upserted; 'skipped' = dedupe hit or non-lead; 'errored' = pipeline exception; 'queued-for-review' = low confidence, no record written."
+          },
+          "hubspot_contact_id": {
+            "type": "string | null",
+            "description": "HubSpot Contact record ID if a record was created or updated. Null on skip/error."
+          },
+          "created_at": {
+            "type": "Firestore Timestamp",
+            "description": "Timestamp when this audit log document was written."
+          }
+        }
+      }
+    }
+  },
+
+  "sourceClassifier": {
+    "description": "Lightweight classifier that precedes the structured extractor. Maps each email to a known source or 'unknown'. Drives which extraction prompt/examples are used and sets inbox_agent_lead_source.",
+    "output": {
+      "sourceLabel": {
+        "type": "string",
+        "description": "Human-readable source name written to inbox_agent_lead_source.",
+        "examples": ["CarGurus", "AutoTrader", "Boat Trader", "Facebook Marketplace", "Dealer Site Form", "Unknown"]
+      },
+      "confidence": {
+        "type": "string",
+        "enum": ["heuristic", "model"],
+        "description": "'heuristic' = matched via From: domain rule; 'model' = fell through to AI classifier."
+      }
+    }
+  }
+}

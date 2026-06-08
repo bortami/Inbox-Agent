@@ -1,0 +1,18 @@
+{
+  "uid": "inbox_ai_agent_webhooks",
+  "type": "webhooks",
+  "config": {
+    "settings": {
+      "targetUrl": "https://inbox-agent-483790599125.us-central1.run.app/webhook",
+      "maxConcurrentRequests": 10
+    },
+    "subscriptions": {
+      "hubEvents": [
+        {
+          "subscriptionType": "conversation.newMessage",
+          "active": true
+        }
+      ]
+    }
+  }
+}

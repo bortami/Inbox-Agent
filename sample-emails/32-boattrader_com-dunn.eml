@@ -1,0 +1,62 @@
+From: "Boat Trader Lead" <leads@boattrader.com>
+To: sales@marinedealership.com
+Subject: Boat Trader Inquiry — 2023 Grady-White Canyon 306
+Date: Sat, 06 Jun 2026 11:00:00 GMT
+Message-ID: <1000031.1780872070767@boattrader.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:0;background:#003F6B;font-family:'Arial',sans-serif}
+.outer{max-width:600px;margin:20px auto;background:#fff;border-radius:6px;overflow:hidden}
+.hdr{background:#003F6B;padding:20px 24px}
+.hdr-title{color:#FFF;font-size:22px;font-weight:bold}
+.hdr-sub{color:#7EC8E3;font-size:13px;margin-top:4px}
+.body{padding:24px}
+.vehicle-card{background:#E8F4FD;border-radius:6px;padding:16px 20px;margin-bottom:18px;border-left:4px solid #0073B1}
+.vehicle-name{font-size:17px;font-weight:bold;color:#003F6B;margin-bottom:10px}
+dl{margin:0;display:grid;grid-template-columns:140px 1fr;gap:4px 12px}
+dt{color:#555;font-size:12px;font-weight:bold;text-transform:uppercase}
+dd{margin:0;font-size:13px;font-weight:600;color:#111}
+.contact-table{width:100%;border-collapse:collapse;margin-top:12px}
+.contact-table td{padding:8px 0;font-size:13px;border-bottom:1px solid #eee}
+.contact-table td:first-child{color:#777;width:130px}
+.contact-table td:last-child{font-weight:600}
+.msg-box{background:#f7fbff;border:1px solid #c5dff0;border-radius:4px;padding:14px;margin-top:16px;font-size:13px;color:#333;line-height:1.65}
+.footer{background:#003F6B;padding:12px 24px;font-size:11px;color:#7EC8E3}
+</style></head>
+<body>
+<div class="outer">
+  <div class="hdr">
+    <div class="hdr-title">Boat Trader</div>
+    <div class="hdr-sub">New Lead Notification &mdash; Sat, 06 Jun 2026 11:00:00 GMT</div>
+  </div>
+  <div class="body">
+    <p style="font-size:14px;color:#333">A potential buyer has submitted an inquiry through <strong>BoatTrader.com</strong> about the following listing:</p>
+    <div class="vehicle-card">
+      <div class="vehicle-name">2023 Grady-White Canyon 306</div>
+      <dl>
+        <dt>HIN / VIN</dt><dd>GWF3061C323</dd>
+        <dt>Stock #</dt><dd>GW23-3061</dd>
+        <dt>Price</dt><dd>$175,000</dd>
+        <dt>Length</dt><dd>30 ft</dd>
+        <dt>Type</dt><dd>Center Console</dd>
+      </dl>
+    </div>
+    <h3 style="font-size:13px;text-transform:uppercase;color:#003F6B;letter-spacing:.5px">Buyer Contact Information</h3>
+    <table class="contact-table">
+      <tr><td>Name</td><td>Natalie Dunn</td></tr>
+      <tr><td>Email</td><td>ndunn84@hotmail.com</td></tr>
+      <tr><td>Phone</td><td>(757) 555-0843</td></tr>
+      <tr><td>Lead Source</td><td>BoatTrader.com</td></tr>
+      <tr><td>Reference #</td><td>BT-1000031</td></tr>
+    </table>
+    <h3 style="font-size:13px;text-transform:uppercase;color:#003F6B;letter-spacing:.5px;margin-top:20px">Buyer Message</h3>
+    <div class="msg-box">I'm interested in this boat for lake use. Does it come with a trailer and any extras like fenders, ropes, or a cover? Happy to schedule a showing this weekend.</div>
+  </div>
+  <div class="footer">BoatTrader.com &bull; Dominion Marine Media &bull; Norfolk, VA &bull; Lead ID: BT-1000031</div>
+</div>
+</body></html>

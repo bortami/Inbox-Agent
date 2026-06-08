@@ -1,0 +1,61 @@
+From: "AutoTrader Lead Notification" <noreply@autotrader.com>
+To: internet@dealership.com
+Subject: [AutoTrader] Lead Alert — Vanessa Holloway is interested in your 2021 Toyota RAV4 Prime XSE
+Date: Thu, 04 Jun 2026 09:00:00 GMT
+Message-ID: <1000023.1780872070766@autotrader.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:0;background:#EDEEEF;font-family:Arial,sans-serif}
+.wrap{max-width:620px;margin:20px auto}
+.hdr{background:#E8590C;padding:18px 24px;border-radius:4px 4px 0 0;display:flex;align-items:center}
+.hdr-title{color:#fff;font-size:20px;font-weight:bold;font-style:italic}
+.badge{background:#fff;color:#E8590C;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:12px;margin-left:12px}
+.card{background:#fff;border:1px solid #ddd;border-top:none}
+.section{padding:20px 24px;border-bottom:1px solid #eee}
+.section-label{font-size:11px;font-weight:bold;text-transform:uppercase;color:#E8590C;margin-bottom:10px;letter-spacing:.5px}
+.row{display:flex;margin-bottom:8px;align-items:baseline}
+.lbl{min-width:150px;font-size:12px;color:#888}
+.val{font-size:13px;font-weight:700;color:#111}
+.vin-highlight{font-family:monospace;background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:12px}
+.msg-section{padding:20px 24px}
+.msg-label{font-size:11px;font-weight:bold;text-transform:uppercase;color:#E8590C;margin-bottom:8px;letter-spacing:.5px}
+.msg-body{background:#fff8f5;border:1px solid #ffd0b5;border-radius:4px;padding:14px;font-size:13px;color:#333;line-height:1.65}
+.footer-bar{background:#333;padding:10px 24px;border-radius:0 0 4px 4px;font-size:11px;color:#aaa}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <span class="hdr-title">AutoTrader</span>
+    <span class="badge">NEW LEAD</span>
+  </div>
+  <div class="card">
+    <div class="section">
+      <div class="section-label">Vehicle Details</div>
+      <div class="row"><span class="lbl">Year / Make / Model</span><span class="val">2021 Toyota RAV4 Prime XSE</span></div>
+      <div class="row"><span class="lbl">VIN</span><span class="val"><span class="vin-highlight">4T3RWRFV5MU023541</span></span></div>
+      <div class="row"><span class="lbl">Stock Number</span><span class="val">TR21-3541</span></div>
+      <div class="row"><span class="lbl">Asking Price</span><span class="val">$34,900</span></div>
+      <div class="row"><span class="lbl">Miles</span><span class="val">26,400</span></div>
+      <div class="row"><span class="lbl">Color</span><span class="val">Blueprint</span></div>
+    </div>
+    <div class="section">
+      <div class="section-label">Lead Contact</div>
+      <div class="row"><span class="lbl">Name</span><span class="val">Vanessa Holloway</span></div>
+      
+      <div class="row"><span class="lbl">Phone Number</span><span class="val">(901) 555-0458</span></div>
+      <div class="row"><span class="lbl">Lead ID</span><span class="val">AT-001000023</span></div>
+      <div class="row"><span class="lbl">Received</span><span class="val">Thu, 04 Jun 2026 09:00:00 GMT</span></div>
+    </div>
+    <div class="msg-section">
+      <div class="msg-label">Customer's Message</div>
+      <div class="msg-body">"Do you offer any kind of test-drive at home or mobile test drives? I'm about 2 hours away and want to make sure it's the right fit before making the drive."</div>
+    </div>
+  </div>
+  <div class="footer-bar">AutoTrader &copy; 2026 | Cox Automotive | Atlanta, GA | Lead Reference: AT-001000023</div>
+</div>
+</body></html>

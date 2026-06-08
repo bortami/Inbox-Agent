@@ -1,0 +1,7 @@
+{
+  "uid": "inbox_ai_agent_settings",
+  "type": "settings",
+  "config": {
+    "entrypoint": "/app/settings/SettingsPage.tsx"
+  }
+}

@@ -1,0 +1,55 @@
+From: "Boats.com" <noreply@boats.com>
+To: sales@marinedealership.com
+Subject: boats.com — New Inquiry: 2021 Monterey 258 SS
+Date: Sun, 07 Jun 2026 20:00:00 GMT
+Message-ID: <1000035.1780872070767@boats.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:20px;background:#f0f4f7;font-family:Georgia,'Times New Roman',serif}
+.card{max-width:580px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.topbar{background:#1A6B9A;padding:14px 22px;display:flex;justify-content:space-between;align-items:center}
+.logo{color:#fff;font-size:20px;font-weight:bold;letter-spacing:-1px}
+.new-badge{background:#F5A623;color:#fff;font-size:11px;font-weight:bold;padding:4px 10px;border-radius:3px}
+.section{padding:20px 22px;border-bottom:1px solid #eee}
+.sh{font-size:11px;font-weight:bold;text-transform:uppercase;color:#1A6B9A;margin:0 0 10px;letter-spacing:.4px}
+.fl{display:flex;flex-wrap:wrap;gap:12px}
+.fi{flex:1;min-width:120px}
+.fi-label{font-size:10px;color:#999;text-transform:uppercase;margin-bottom:2px}
+.fi-value{font-size:13px;font-weight:bold;color:#222}
+.msg{padding:20px 22px;font-size:13px;color:#555;font-style:italic;line-height:1.7;background:#fafafa}
+.ft{background:#1A6B9A;padding:10px 22px;font-size:11px;color:#a0c8e0}
+</style></head>
+<body>
+<div class="card">
+  <div class="topbar">
+    <div class="logo">boats.com</div>
+    <div class="new-badge">NEW INQUIRY</div>
+  </div>
+  <div class="section">
+    <p class="sh">Listing</p>
+    <div class="fl">
+      <div class="fi"><div class="fi-label">Year / Make</div><div class="fi-value">2021 Monterey</div></div>
+      <div class="fi"><div class="fi-label">Model</div><div class="fi-value">258 SS</div></div>
+      <div class="fi"><div class="fi-label">HIN</div><div class="fi-value">MON25831C121</div></div>
+      <div class="fi"><div class="fi-label">Price</div><div class="fi-value">$67,500</div></div>
+      <div class="fi"><div class="fi-label">Type</div><div class="fi-value">Sport Cruiser</div></div>
+      <div class="fi"><div class="fi-label">Length</div><div class="fi-value">26 ft</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <p class="sh">Buyer</p>
+    <div class="fl">
+      <div class="fi"><div class="fi-label">Name</div><div class="fi-value">Monica Herrera</div></div>
+      <div class="fi"><div class="fi-label">Email</div><div class="fi-value">monica.herrera@gmail.com</div></div>
+      
+    </div>
+  </div>
+  <div class="msg">"Can you provide more details about the electronics package and any upgrades that have been added? Also, is the price firm or is there some flexibility?"</div>
+  <div class="ft">boats.com &bull; Inquiry #BCM-01000035 &bull; Sun, 07 Jun 2026 20:00:00 GMT</div>
+</div>
+</body></html>

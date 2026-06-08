@@ -1,0 +1,61 @@
+From: "AutoTrader Lead Notification" <noreply@autotrader.com>
+To: internet@dealership.com
+Subject: [AutoTrader] Lead Alert — Rachel Griffith is interested in your 2022 Toyota Camry SE
+Date: Thu, 04 Jun 2026 19:00:00 GMT
+Message-ID: <1000025.1780872070766@autotrader.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:0;background:#EDEEEF;font-family:Arial,sans-serif}
+.wrap{max-width:620px;margin:20px auto}
+.hdr{background:#E8590C;padding:18px 24px;border-radius:4px 4px 0 0;display:flex;align-items:center}
+.hdr-title{color:#fff;font-size:20px;font-weight:bold;font-style:italic}
+.badge{background:#fff;color:#E8590C;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:12px;margin-left:12px}
+.card{background:#fff;border:1px solid #ddd;border-top:none}
+.section{padding:20px 24px;border-bottom:1px solid #eee}
+.section-label{font-size:11px;font-weight:bold;text-transform:uppercase;color:#E8590C;margin-bottom:10px;letter-spacing:.5px}
+.row{display:flex;margin-bottom:8px;align-items:baseline}
+.lbl{min-width:150px;font-size:12px;color:#888}
+.val{font-size:13px;font-weight:700;color:#111}
+.vin-highlight{font-family:monospace;background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:12px}
+.msg-section{padding:20px 24px}
+.msg-label{font-size:11px;font-weight:bold;text-transform:uppercase;color:#E8590C;margin-bottom:8px;letter-spacing:.5px}
+.msg-body{background:#fff8f5;border:1px solid #ffd0b5;border-radius:4px;padding:14px;font-size:13px;color:#333;line-height:1.65}
+.footer-bar{background:#333;padding:10px 24px;border-radius:0 0 4px 4px;font-size:11px;color:#aaa}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <span class="hdr-title">AutoTrader</span>
+    <span class="badge">NEW LEAD</span>
+  </div>
+  <div class="card">
+    <div class="section">
+      <div class="section-label">Vehicle Details</div>
+      <div class="row"><span class="lbl">Year / Make / Model</span><span class="val">2022 Toyota Camry SE</span></div>
+      <div class="row"><span class="lbl">VIN</span><span class="val"><span class="vin-highlight">4T1B11HK8NU624831</span></span></div>
+      <div class="row"><span class="lbl">Stock Number</span><span class="val">TC22-4831</span></div>
+      <div class="row"><span class="lbl">Asking Price</span><span class="val">$24,995</span></div>
+      <div class="row"><span class="lbl">Miles</span><span class="val">18,420</span></div>
+      <div class="row"><span class="lbl">Color</span><span class="val">Midnight Black</span></div>
+    </div>
+    <div class="section">
+      <div class="section-label">Lead Contact</div>
+      <div class="row"><span class="lbl">Name</span><span class="val">Rachel Griffith</span></div>
+      <div class="row"><span class="lbl">Email Address</span><span class="val">rachgriffith@gmail.com</span></div>
+      <div class="row"><span class="lbl">Phone Number</span><span class="val">(317) 555-0061</span></div>
+      <div class="row"><span class="lbl">Lead ID</span><span class="val">AT-001000025</span></div>
+      <div class="row"><span class="lbl">Received</span><span class="val">Thu, 04 Jun 2026 19:00:00 GMT</span></div>
+    </div>
+    <div class="msg-section">
+      <div class="msg-label">Customer's Message</div>
+      <div class="msg-body">"Does this vehicle have a clean title? I'd like to see a full Carfax report before moving forward. Also, is there any room to negotiate on the price?"</div>
+    </div>
+  </div>
+  <div class="footer-bar">AutoTrader &copy; 2026 | Cox Automotive | Atlanta, GA | Lead Reference: AT-001000025</div>
+</div>
+</body></html>

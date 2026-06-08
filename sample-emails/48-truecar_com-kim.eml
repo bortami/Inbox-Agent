@@ -1,0 +1,67 @@
+From: "TrueCar Lead Notification" <dealers@truecar.com>
+To: internet@dealership.com
+Subject: TrueCar Lead — Audrey Kim — 2022 Hyundai Tucson SEL
+Date: Thu, 11 Jun 2026 03:00:00 GMT
+Message-ID: <1000047.1780872070768@truecar.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body{margin:0;padding:0;background:#F5F5F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+.container{max-width:600px;margin:20px auto;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #e0e0e0}
+.nav{background:#0072CE;padding:14px 22px;display:flex;align-items:center;gap:10px}
+.nav-logo{color:#fff;font-size:20px;font-weight:900;letter-spacing:-1px}
+.nav-badge{background:rgba(255,255,255,.2);color:#fff;font-size:11px;padding:3px 8px;border-radius:2px;border:1px solid rgba(255,255,255,.4)}
+.hero{background:#E8F4FF;padding:18px 22px;border-bottom:1px solid #cde0f5}
+.hero-title{font-size:16px;font-weight:700;color:#0072CE}
+.hero-sub{font-size:12px;color:#5a7fa0;margin-top:3px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.col{padding:18px 22px}
+.col+.col{border-left:1px solid #eee}
+.col-title{font-size:11px;font-weight:700;text-transform:uppercase;color:#0072CE;letter-spacing:.5px;margin-bottom:12px}
+.row{margin-bottom:8px}
+.row-label{font-size:11px;color:#999}
+.row-value{font-size:13px;font-weight:600;color:#111;margin-top:1px}
+.vin-chip{display:inline-block;font-family:monospace;background:#eee;font-size:12px;padding:2px 8px;border-radius:3px}
+.msg-area{padding:18px 22px;background:#FAFAFA;border-top:1px solid #eee}
+.msg-title{font-size:11px;font-weight:700;text-transform:uppercase;color:#0072CE;letter-spacing:.5px;margin-bottom:8px}
+.msg-text{font-size:13px;color:#444;line-height:1.65}
+.footer{background:#0072CE;padding:10px 22px;font-size:11px;color:rgba(255,255,255,.7)}
+</style></head>
+<body>
+<div class="container">
+  <div class="nav">
+    <span class="nav-logo">TrueCar</span>
+    <span class="nav-badge">NEW LEAD</span>
+  </div>
+  <div class="hero">
+    <div class="hero-title">New Buyer Lead — Act within 1 hour for best conversion</div>
+    <div class="hero-sub">Received: Thu, 11 Jun 2026 03:00:00 GMT</div>
+  </div>
+  <div class="two-col">
+    <div class="col">
+      <div class="col-title">Vehicle</div>
+      <div class="row"><div class="row-label">Year/Make/Model</div><div class="row-value">2022 Hyundai Tucson SEL</div></div>
+      <div class="row"><div class="row-label">VIN</div><div class="row-value"><span class="vin-chip">5NMJB3AE4NH048220</span></div></div>
+      <div class="row"><div class="row-label">Stock #</div><div class="row-value">HT22-8220</div></div>
+      <div class="row"><div class="row-label">Price</div><div class="row-value">$28,400</div></div>
+      <div class="row"><div class="row-label">Mileage</div><div class="row-value">19,750 mi</div></div>
+    </div>
+    <div class="col">
+      <div class="col-title">Buyer</div>
+      <div class="row"><div class="row-label">Name</div><div class="row-value">Audrey Kim</div></div>
+      <div class="row"><div class="row-label">Email</div><div class="row-value">akim@gmail.com</div></div>
+      
+      <div class="row"><div class="row-label">Lead ID</div><div class="row-value">TC-01000047</div></div>
+    </div>
+  </div>
+  <div class="msg-area">
+    <div class="msg-title">Buyer Message</div>
+    <div class="msg-text">"I'm very interested in this vehicle and would love to schedule a test drive at your earliest convenience. What times do you have available this week?"</div>
+  </div>
+  <div class="footer">TrueCar, Inc. &bull; Santa Monica, CA &bull; Lead #TC-01000047</div>
+</div>
+</body></html>

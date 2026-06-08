@@ -1,0 +1,37 @@
+# Inbox Agent — project constants
+# Non-secret configuration shared across GCP setup, deployment, and HubSpot config.
+# Secrets (client_secret, webhook_secret, api keys) live in GCP Secret Manager only.
+
+gcp:
+  project_id: inbox-agent-498701
+  region: us-central1
+  service_name: inbox-agent
+  service_account: inbox-agent@inbox-agent-498701.iam.gserviceaccount.com
+  cloud_tasks_queue: webhook-processing
+  cloud_run_url: https://inbox-agent-483790599125.us-central1.run.app
+
+hubspot:
+  project_dir: inbox-ai-agent
+  app_uid: inbox_ai_agent_app
+  webhooks_uid: inbox_ai_agent_webhooks
+  platform_version: "2026.03"
+
+ai:
+  provider: claude  # claude | gemini
+  claude_model: claude-sonnet-4-6
+  gemini_model: gemini-2.0-flash-001
+
+firestore:
+  collections:
+    portals: portals
+    dedupe_keys: dedupeKeys
+    audit_log: auditLog
+  ttl:
+    collection: dedupeKeys
+    field: created_at
+    seconds: 86400  # 24 hours
+
+support:
+  email: support@redanthos.com
+  docs_url: https://redanthos.com/inbox-ai-agent/docs
+  support_url: https://redanthos.com/support
