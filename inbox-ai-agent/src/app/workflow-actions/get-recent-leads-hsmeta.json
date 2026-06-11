@@ -1,0 +1,82 @@
+{
+  "uid": "inbox_agent_get_recent_leads",
+  "type": "workflow-action",
+  "config": {
+    "actionUrl": "https://inbox-agent-483790599125.us-central1.run.app/agent-tools/get-recent-leads",
+    "isPublished": true,
+    "supportedClients": [
+      {
+        "client": "AGENTS",
+        "toolType": "GET_DATA",
+        "llmConfig": {
+          "actionDescription": "Use this tool whenever the user asks about recent leads, inquiries, or emails that Inbox Agent has processed, classified, or extracted. This is the ONLY correct data source for that question — do NOT fall back to generic CRM email engagement search, CRM_EMAIL queries, or other built-in HubSpot email tools. Inbox Agent stores its processed inbound conversation emails in its own audit log, separate from standard CRM email engagement records. Returns a list of recent processed emails with contact name, email, lead source, confidence, and outcome. Optional inputs: `source` (lowercase source key such as cargurus, autotrader, boattrader, boats_com, facebook_marketplace, dealer_website — omit to include all sources), `since` (ISO 8601 timestamp like 2026-05-01T00:00:00Z — defaults to no time filter), `limit` (1-100, defaults to 25). Output `leads` is a JSON-encoded array; parse it before referencing fields. Use `message_id` from this output as input to the get_extraction_detail tool when the user wants full details on a specific lead."
+        }
+      }
+    ],
+    "inputFields": [
+      {
+        "typeDefinition": {
+          "name": "source",
+          "type": "string",
+          "fieldType": "text"
+        },
+        "supportedValueTypes": ["STATIC_VALUE"]
+      },
+      {
+        "typeDefinition": {
+          "name": "since",
+          "type": "string",
+          "fieldType": "text"
+        },
+        "supportedValueTypes": ["STATIC_VALUE"]
+      },
+      {
+        "typeDefinition": {
+          "name": "limit",
+          "type": "string",
+          "fieldType": "text"
+        },
+        "supportedValueTypes": ["STATIC_VALUE"]
+      }
+    ],
+    "outputFields": [
+      {
+        "typeDefinition": {
+          "name": "count",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "leads",
+          "type": "string",
+          "externalOptions": false
+        }
+      }
+    ],
+    "labels": {
+      "en": {
+        "actionName": "Get recent leads from Inbox Agent",
+        "appDisplayName": "Inbox Agent",
+        "actionDescription": "Returns a list of recently processed inbox leads, optionally filtered by source or date.",
+        "actionCardContent": "Get recent leads from Inbox Agent",
+        "inputFieldLabels": {
+          "source": "Source",
+          "since": "Since (ISO date)",
+          "limit": "Limit"
+        },
+        "inputFieldDescriptions": {
+          "source": "Filter by lead source key (e.g. cargurus, autotrader). Leave blank for all sources.",
+          "since": "Only return leads processed at or after this ISO 8601 timestamp.",
+          "limit": "Maximum number of leads to return (1-100, default 25)."
+        },
+        "outputFieldLabels": {
+          "count": "Result count",
+          "leads": "Leads (JSON)"
+        }
+      }
+    },
+    "objectTypes": ["CONTACT"]
+  }
+}

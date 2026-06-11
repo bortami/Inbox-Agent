@@ -86,12 +86,12 @@ Goal: handle the full install/uninstall lifecycle and give per-portal configurat
 
 Goal: register Inbox-Agent as a first-class Breeze AI participant — a strong differentiator for Marketplace listing and certification.
 
-- [ ] Add `get_recent_leads` tool (`GET_DATA`): queries Firestore audit log by portal, source, and date range; returns structured list for Breeze
-- [ ] Add `get_extraction_detail` tool (`GET_DATA`): returns full audit log entry (extraction JSON, confidence, outcome) for a given `message_id`
-- [ ] Add `reprocess_email` tool (`TAKE_ACTION`): triggers the replay endpoint for a past `message_id`; requires user approval in Breeze
-- [ ] Add `classify_source` tool (`GENERATE`): runs the source classifier on pasted email text; returns source name and confidence
-- [ ] Register all tools in `src/app/workflow-actions/` with `*-hsmeta.json` config (`supportedClients: ["AGENTS"]`, `llmConfig.actionDescription`)
-- [ ] Verify `X-HubSpot-Signature` on all tool `actionUrl` routes (same logic as webhook receiver)
+- [x] Add `get_recent_leads` tool (`GET_DATA`): queries Firestore audit log by portal, source, and date range; returns structured list for Breeze
+- [x] Add `get_extraction_detail` tool (`GET_DATA`): returns full audit log entry (extraction JSON, confidence, outcome) for a given `message_id`
+- [x] ~~Add `reprocess_email` tool (`TAKE_ACTION`)~~ — dropped: the end user has no way to know a `message_id`, so the agent has nothing to call it with
+- [x] Add `classify_source` tool (`GENERATE`): runs the source classifier on pasted email text; returns source name and confidence
+- [x] Register all tools in `src/app/workflow-actions/` with `*-hsmeta.json` config (`supportedClients: ["AGENTS"]`, `llmConfig.actionDescription`)
+- [x] Verify `X-HubSpot-Signature` on all tool `actionUrl` routes (same logic as webhook receiver)
 - [ ] Test each tool with the HubSpot Developer Tool Testing Agent
 
 ## Phase 5 — Marketplace Submission Prep

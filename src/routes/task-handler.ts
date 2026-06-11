@@ -4,9 +4,15 @@ import { getValidToken } from '../lib/token-store.js';
 import { fetchMessageText, assignThread } from '../lib/hubspot-conversations.js';
 import { upsertContact, createNote } from '../lib/hubspot-writer.js';
 import { getExtractor } from '../ai/extractor-factory.js';
+import { verifyGoogleOidcToken } from '../lib/verify-google-oidc.js';
 import type { TaskPayload } from '../types/index.js';
 
 export const taskRouter = Router();
+
+const verifyCloudTasks = verifyGoogleOidcToken(
+  process.env.SERVICE_URL!,
+  [process.env.SERVICE_ACCOUNT_EMAIL!],
+);
 
 function buildDedupeKey(installId: string, email: string, listingRef: string): string {
   const hourBucket = Math.floor(Date.now() / (1000 * 60 * 60));
@@ -18,7 +24,7 @@ function getListingRef(lr: { vin?: string; stock_number?: string; url?: string; 
   return lr.vin ?? lr.stock_number ?? lr.url ?? lr.title ?? '';
 }
 
-taskRouter.post('/process', async (req, res) => {
+taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
   const payload: TaskPayload = req.body;
   const { portalId, event } = payload;
   const threadId = event.objectId;
@@ -45,7 +51,7 @@ taskRouter.post('/process', async (req, res) => {
       portal_id: portalId.toString(),
       install_id: installId,
       conversation_id: threadId.toString(),
-      source_classified: null,
+      source_classified: extraction.source,
       extraction_json: extraction as unknown as Record<string, unknown>,
       confidence: extraction.confidence,
       hubspot_contact_id: null,

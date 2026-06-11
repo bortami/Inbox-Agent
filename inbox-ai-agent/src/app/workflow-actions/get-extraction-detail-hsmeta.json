@@ -1,0 +1,104 @@
+{
+  "uid": "inbox_agent_get_extraction_detail",
+  "type": "workflow-action",
+  "config": {
+    "actionUrl": "https://inbox-agent-483790599125.us-central1.run.app/agent-tools/get-extraction-detail",
+    "isPublished": true,
+    "supportedClients": [
+      {
+        "client": "AGENTS",
+        "toolType": "GET_DATA",
+        "llmConfig": {
+          "actionDescription": "Use this tool when the user wants the full extraction detail for a lead that Inbox Agent processed. Provide ONE of: `hubspot_contact_id` (preferred when the user is asking about a specific Contact — pass the current Contact record's ID directly from CRM context) OR `message_id` (use this only when chaining from a prior get_recent_leads result; do not invent one). When `hubspot_contact_id` is provided, returns the most recent extraction for that Contact. Returns the full extracted JSON (firstname, lastname, email, phone, message, listing_reference, is_actual_lead, confidence, etc.), the classified source, outcome, and a CTA linking to the resulting HubSpot Contact."
+        }
+      }
+    ],
+    "inputFields": [
+      {
+        "typeDefinition": {
+          "name": "hubspot_contact_id",
+          "type": "string",
+          "fieldType": "text"
+        },
+        "supportedValueTypes": ["STATIC_VALUE"]
+      },
+      {
+        "typeDefinition": {
+          "name": "message_id",
+          "type": "string",
+          "fieldType": "text"
+        },
+        "supportedValueTypes": ["STATIC_VALUE"]
+      }
+    ],
+    "outputFields": [
+      {
+        "typeDefinition": {
+          "name": "message_id",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "conversation_id",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "source",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "confidence",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "outcome",
+          "type": "string",
+          "externalOptions": false
+        }
+      },
+      {
+        "typeDefinition": {
+          "name": "extraction_json",
+          "type": "string",
+          "externalOptions": false
+        }
+      }
+    ],
+    "labels": {
+      "en": {
+        "actionName": "Get Inbox Agent extraction detail",
+        "appDisplayName": "Inbox Agent",
+        "actionDescription": "Returns the full extracted lead JSON for a specific processed email.",
+        "actionCardContent": "Get Inbox Agent extraction detail",
+        "inputFieldLabels": {
+          "hubspot_contact_id": "HubSpot Contact ID",
+          "message_id": "Message ID"
+        },
+        "inputFieldDescriptions": {
+          "hubspot_contact_id": "The Contact record's HubSpot ID. Returns the most recent extraction for that Contact.",
+          "message_id": "The HubSpot Conversations message ID from get_recent_leads. Use when chaining from a recent-leads result."
+        },
+        "outputFieldLabels": {
+          "message_id": "Message ID",
+          "conversation_id": "Conversation ID",
+          "source": "Source",
+          "confidence": "Confidence",
+          "outcome": "Outcome",
+          "extraction_json": "Extraction (JSON)"
+        }
+      }
+    },
+    "objectTypes": ["CONTACT"]
+  }
+}

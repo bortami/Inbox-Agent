@@ -52,13 +52,49 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
         // Fetch current settings and paginated owners list in parallel (first page of owners).
         const [settingsRes, firstOwnersRes] = await Promise.all([
           hubspot.fetch(`${CLOUD_RUN_URL}/settings?portalId=${portalId}`),
-          hubspot.fetch('https://api.hubapi.com/crm/v3/owners?limit=100'),
+          hubspot.fetch(`${CLOUD_RUN_URL}/owners?portalId=${portalId}`),
         ]);
 
-        if (settingsRes.ok) {
-          const s = (await settingsRes.json()) as Settings;
-          setReviewOwnerEmail(s.review_owner_email ?? '');
-          setNotesEnabled(s.notes_enabled ?? true);
+        if (!settingsRes) {
+          actions.addAlert({
+            type: 'danger',
+            message: 'No response from settings endpoint.',
+          });
+        } else if (!settingsRes.ok) {
+          const body = await settingsRes.text().catch(() => '');
+          actions.addAlert({
+            type: 'danger',
+            message: `Settings load failed (${settingsRes.status}): ${body || 'no response body'}`,
+          });
+        } else {
+          const raw = await settingsRes.text().catch(() => '');
+          if (!raw) {
+            actions.addAlert({
+              type: 'warning',
+              message: 'Settings endpoint returned an empty body.',
+            });
+          } else {
+            let parsed: unknown;
+            try {
+              parsed = JSON.parse(raw);
+            } catch {
+              actions.addAlert({
+                type: 'danger',
+                message: `Settings response was not valid JSON: ${raw.slice(0, 200)}`,
+              });
+              parsed = null;
+            }
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              const s = parsed as Partial<Settings>;
+              setReviewOwnerEmail(s.review_owner_email ?? '');
+              setNotesEnabled(typeof s.notes_enabled === 'boolean' ? s.notes_enabled : true);
+            } else if (parsed !== null) {
+              actions.addAlert({
+                type: 'danger',
+                message: `Settings response had unexpected shape: ${raw.slice(0, 200)}`,
+              });
+            }
+          }
         }
 
         // Collect owners across all pages.
@@ -73,10 +109,16 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
           }
         };
 
-        if (!firstOwnersRes.ok) {
+        if (!firstOwnersRes) {
+          actions.addAlert({
+            type: 'danger',
+            message: 'No response from HubSpot owners API.',
+          });
+        } else if (!firstOwnersRes.ok) {
+          const body = await firstOwnersRes.text().catch(() => '');
           actions.addAlert({
             type: 'warning',
-            message: `Could not load users (${firstOwnersRes.status}). The app may need to be reinstalled to grant the crm.objects.owners.read scope.`,
+            message: `Could not load users (${firstOwnersRes.status}): ${body || 'no response body'}`,
           });
         } else {
           const firstPage = (await firstOwnersRes.json()) as {
@@ -90,7 +132,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
 
           while (after && page < MAX_OWNER_PAGES) {
             const res = await hubspot.fetch(
-              `https://api.hubapi.com/crm/v3/owners?limit=100&after=${after}`,
+              `${CLOUD_RUN_URL}/owners?portalId=${portalId}&after=${after}`,
             );
             if (!res.ok) break;
             const data = (await res.json()) as {

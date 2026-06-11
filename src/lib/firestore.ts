@@ -1,4 +1,4 @@
-import { Firestore, FieldValue } from '@google-cloud/firestore';
+import { Firestore, FieldValue, type Query } from '@google-cloud/firestore';
 import type { Portal, AuditLog } from '../types/index.js';
 
 let _db: Firestore | null = null;
@@ -89,4 +89,45 @@ export async function getAuditLogByMessageId(
 
   const doc = snapshot.docs[0];
   return { id: doc.id, ...(doc.data() as AuditLog) };
+}
+
+export async function getLatestAuditLogByContactId(
+  portalId: string,
+  hubspotContactId: string,
+): Promise<(AuditLog & { id: string }) | null> {
+  const snapshot = await getDb()
+    .collection('auditLog')
+    .where('portal_id', '==', portalId)
+    .where('hubspot_contact_id', '==', hubspotContactId)
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+
+  const doc = snapshot.docs[0];
+  return { id: doc.id, ...(doc.data() as AuditLog) };
+}
+
+export async function getRecentAuditLogs(
+  portalId: string,
+  opts: { source?: string; sinceMs?: number; limit?: number } = {},
+): Promise<Array<AuditLog & { id: string }>> {
+  let query: Query = getDb()
+    .collection('auditLog')
+    .where('portal_id', '==', portalId);
+
+  if (opts.source) {
+    query = query.where('source_classified', '==', opts.source);
+  }
+  if (opts.sinceMs !== undefined) {
+    query = query.where('created_at', '>=', new Date(opts.sinceMs));
+  }
+
+  const snapshot = await query
+    .orderBy('created_at', 'desc')
+    .limit(opts.limit ?? 25)
+    .get();
+
+  return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as AuditLog) }));
 }

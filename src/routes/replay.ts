@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { getAuditLogByMessageId } from '../lib/firestore.js';
 import { enqueueWebhookTask } from '../lib/cloud-tasks.js';
+import { verifyAdminToken } from '../lib/verify-admin-token.js';
 import type { TaskPayload } from '../types/index.js';
 
 export const replayRouter = Router();
 
-replayRouter.post('/', async (req, res) => {
+replayRouter.post('/', verifyAdminToken, async (req, res) => {
   const { message_id } = req.body as { message_id?: string };
 
   if (!message_id) {

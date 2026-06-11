@@ -1,11 +1,17 @@
 import { Router } from 'express';
 import { syncUninstallEvents } from '../lib/hubspot-journal.js';
+import { verifyGoogleOidcToken } from '../lib/verify-google-oidc.js';
 
 export const journalRouter = Router();
 
+const verifyCloudScheduler = verifyGoogleOidcToken(
+  process.env.SERVICE_URL!,
+  [process.env.SERVICE_ACCOUNT_EMAIL!],
+);
+
 // Called by Cloud Scheduler (e.g. every 5 minutes) to poll the HubSpot webhooks
 // journal for APP_UNINSTALL events and delete the corresponding Firestore data.
-journalRouter.post('/sync', async (req, res) => {
+journalRouter.post('/sync', verifyCloudScheduler, async (req, res) => {
   try {
     const processed = await syncUninstallEvents();
     console.log(`Journal sync complete — ${processed} uninstall(s) processed`);

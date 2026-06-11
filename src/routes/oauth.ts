@@ -16,12 +16,27 @@ const SCOPES = [
   'crm.schemas.contacts.write',
 ].join(' ');
 
+const STATE_COOKIE = 'oauth_state';
+const STATE_COOKIE_MAX_AGE_MS = 10 * 60 * 1000;
+
 // GET /oauth/install — redirect user to HubSpot OAuth
 oauthRouter.get('/install', (req, res) => {
+  const state = randomUUID();
+
+  // Signed httpOnly cookie binds this browser to the state we'll verify on callback.
+  res.cookie(STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    signed: true,
+    maxAge: STATE_COOKIE_MAX_AGE_MS,
+  });
+
   const params = new URLSearchParams({
     client_id: process.env.HUBSPOT_CLIENT_ID!,
     redirect_uri: `${process.env.SERVICE_URL}/oauth/callback`,
     scope: SCOPES,
+    state,
   });
 
   res.redirect(`https://app.hubspot.com/oauth/authorize?${params.toString()}`);
@@ -29,10 +44,22 @@ oauthRouter.get('/install', (req, res) => {
 
 // GET /oauth/callback — exchange code for tokens, store in Firestore
 oauthRouter.get('/callback', async (req, res) => {
-  const { code } = req.query as { code?: string };
+  const { code, state } = req.query as { code?: string; state?: string };
   if (!code) {
     res.status(400).send('Missing authorization code');
     return;
+  }
+
+  // CSRF check is enforced only when a state cookie is present (install started at
+  // /oauth/install). HubSpot-initiated installs (marketplace, dev test account) skip
+  // our /install route, so no cookie exists — allow them through.
+  const cookieState = req.signedCookies?.[STATE_COOKIE];
+  if (cookieState) {
+    if (!state || state !== cookieState) {
+      res.status(400).send('Invalid OAuth state');
+      return;
+    }
+    res.clearCookie(STATE_COOKIE);
   }
 
   try {

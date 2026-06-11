@@ -1,14 +1,21 @@
 import 'dotenv/config';
 import express from 'express';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import { webhookRouter } from './routes/webhook.js';
 import { oauthRouter } from './routes/oauth.js';
 import { taskRouter } from './routes/task-handler.js';
 import { replayRouter } from './routes/replay.js';
 import { settingsRouter } from './routes/settings.js';
+import { ownersRouter } from './routes/owners.js';
 import { journalRouter } from './routes/journal.js';
+import { agentToolsRouter } from './routes/agent-tools.js';
 import { ensureUninstallSubscription } from './lib/hubspot-journal.js';
 
 const app = express();
+
+// Cloud Run sits behind a proxy; trust it so rate-limit and cookies see the real client IP/scheme.
+app.set('trust proxy', 1);
 
 // Capture raw body for HubSpot signature verification before JSON parsing
 app.use(
@@ -19,14 +26,32 @@ app.use(
   }),
 );
 
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+const oauthLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 300,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-app.use('/webhook', webhookRouter);
-app.use('/oauth', oauthRouter);
+app.use('/webhook', webhookLimiter, webhookRouter);
+app.use('/oauth', oauthLimiter, oauthRouter);
 app.use('/tasks', taskRouter);
 app.use('/replay', replayRouter);
 app.use('/settings', settingsRouter);
+app.use('/owners', ownersRouter);
 app.use('/journal', journalRouter);
+app.use('/agent-tools', agentToolsRouter);
 
 const PORT = parseInt(process.env.PORT ?? '8080', 10);
 app.listen(PORT, () => {
