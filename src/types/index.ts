@@ -14,6 +14,31 @@ export interface Portal {
   settings?: PortalSettings;
 }
 
+// Billing lives in its own /billing/{portalId} collection, NOT on the Portal doc,
+// so it survives an uninstall (which deletes /portals). Holds only Stripe IDs +
+// status — no HubSpot content — so retaining it past data deletion is defensible.
+export type BillingTier = 'starter' | 'growth' | 'pro' | 'enterprise';
+
+export type BillingStatus =
+  | 'none'       // no subscription ever created
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'detached';  // app uninstalled but subscription left intact (grace period running)
+
+export interface BillingRecord {
+  portal_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  status: BillingStatus;
+  tier?: BillingTier | null;          // which pricing tier the active subscription is on
+  customer_email?: string | null;     // keyed by email for future cross-product reconciliation
+  current_period_end?: number;        // Unix ms
+  detached_at?: number | null;        // Unix ms the portal was uninstalled; drives grace-period sweep
+  updated_at: number;
+}
+
 export interface DedupeKey {
   portal_id: string;
   message_id: string;
@@ -28,7 +53,7 @@ export interface AuditLog {
   source_classified: string | null;
   extraction_json: Record<string, unknown> | null;
   confidence: 'high' | 'medium' | 'low' | null;
-  outcome: 'created' | 'updated' | 'skipped' | 'errored' | 'queued_for_review';
+  outcome: 'created' | 'updated' | 'skipped' | 'errored' | 'queued_for_review' | 'skipped_unpaid';
   hubspot_contact_id: string | null;
   created_at: number;
 }

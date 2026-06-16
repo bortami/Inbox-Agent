@@ -9,7 +9,7 @@
         "client": "AGENTS",
         "toolType": "GET_DATA",
         "llmConfig": {
-          "actionDescription": "Use this tool when the user wants the full extraction detail for a lead that Inbox Agent processed. Provide ONE of: `hubspot_contact_id` (preferred when the user is asking about a specific Contact — pass the current Contact record's ID directly from CRM context) OR `message_id` (use this only when chaining from a prior get_recent_leads result; do not invent one). When `hubspot_contact_id` is provided, returns the most recent extraction for that Contact. Returns the full extracted JSON (firstname, lastname, email, phone, message, listing_reference, is_actual_lead, confidence, etc.), the classified source, outcome, and a CTA linking to the resulting HubSpot Contact."
+          "actionDescription": "Use this tool when the user wants the full extraction detail for a lead that LeadCatch processed. Provide ONE of: `hubspot_contact_id` (preferred when the user is asking about a specific Contact — pass the current Contact record's ID directly from CRM context) OR `message_id` (use this only when chaining from a prior get_recent_leads result; do not invent one). When `hubspot_contact_id` is provided, returns the most recent extraction for that Contact. Returns the full extracted JSON (firstname, lastname, email, phone, message, listing_reference, is_actual_lead, confidence, etc.), the classified source, outcome, and a CTA linking to the resulting HubSpot Contact."
         }
       }
     ],
@@ -77,10 +77,10 @@
     ],
     "labels": {
       "en": {
-        "actionName": "Get Inbox Agent extraction detail",
-        "appDisplayName": "Inbox Agent",
+        "actionName": "Get LeadCatch extraction detail",
+        "appDisplayName": "LeadCatch",
         "actionDescription": "Returns the full extracted lead JSON for a specific processed email.",
-        "actionCardContent": "Get Inbox Agent extraction detail",
+        "actionCardContent": "Get LeadCatch extraction detail",
         "inputFieldLabels": {
           "hubspot_contact_id": "HubSpot Contact ID",
           "message_id": "Message ID"

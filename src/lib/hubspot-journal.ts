@@ -1,4 +1,14 @@
-import { deletePortalData, getJournalOffset, saveJournalOffset } from './firestore.js';
+import {
+  deletePortalData,
+  getJournalOffset,
+  saveJournalOffset,
+  getBilling,
+  saveBilling,
+  getExpiredDetachedBilling,
+} from './firestore.js';
+import { cancelSubscription } from './stripe.js';
+
+const DEFAULT_GRACE_DAYS = 14;
 
 interface TokenCache {
   token: string;
@@ -104,9 +114,24 @@ export async function syncUninstallEvents(): Promise<number> {
   let processed = 0;
   for (const event of journal.journalEvents ?? []) {
     if (event.type === 'app_lifecycle_event' && event.action === 'APP_UNINSTALL') {
-      console.log(`Journal uninstall — portal=${event.portalId}`);
-      await deletePortalData(event.portalId.toString()).catch(err =>
-        console.error('deletePortalData failed', { portalId: event.portalId, err }),
+      const portalId = event.portalId.toString();
+      console.log(`Journal uninstall — portal=${portalId}`);
+
+      // Mark billing detached (NOT canceled) before deleting portal data. The user
+      // may be uninstalling only to refresh the OAuth connection — a reinstall within
+      // the grace window reattaches. The grace-period sweep cancels true abandoners.
+      const billing = await getBilling(portalId);
+      if (billing && billing.status !== 'canceled') {
+        await saveBilling(portalId, {
+          status: 'detached',
+          detached_at: Date.now(),
+        }).catch(err =>
+          console.error('Failed to mark billing detached', { portalId, err }),
+        );
+      }
+
+      await deletePortalData(portalId).catch(err =>
+        console.error('deletePortalData failed', { portalId, err }),
       );
       processed++;
     }
@@ -114,4 +139,34 @@ export async function syncUninstallEvents(): Promise<number> {
 
   await saveJournalOffset(pointer.currentOffset);
   return processed;
+}
+
+// Cancels Stripe subscriptions for portals that have stayed detached (uninstalled)
+// past the grace window. Runs on the same scheduler cadence as syncUninstallEvents.
+// Returns the number of subscriptions canceled.
+export async function sweepDetachedBilling(): Promise<number> {
+  const graceDays = parseInt(
+    process.env.BILLING_GRACE_DAYS ?? String(DEFAULT_GRACE_DAYS),
+    10,
+  );
+  const cutoff = Date.now() - graceDays * 24 * 60 * 60 * 1000;
+
+  const expired = await getExpiredDetachedBilling(cutoff);
+
+  let canceled = 0;
+  for (const billing of expired) {
+    try {
+      await cancelSubscription(billing.stripe_subscription_id!);
+      await saveBilling(billing.portal_id, { status: 'canceled' });
+      console.log(`Grace period elapsed — canceled subscription for portal=${billing.portal_id}`);
+      canceled++;
+    } catch (err) {
+      console.error('Failed to cancel detached subscription', {
+        portalId: billing.portal_id,
+        err,
+      });
+    }
+  }
+
+  return canceled;
 }

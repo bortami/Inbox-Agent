@@ -1,12 +1,12 @@
 # Planning
 
-Source-of-truth spec for Inbox-Agent: a distributable HubSpot public app that converts inbound emails in a HubSpot Conversations Inbox into structured Contact records.
+Source-of-truth spec for LeadCatch: a distributable HubSpot public app that converts inbound emails in a HubSpot Conversations Inbox into structured Contact records.
 
 ## Vision
 
 High-volume inbound businesses (car/boat dealers as the v1 use case) receive lead emails from dozens of syndication sites — each with a different email format, none of them a clean form submission. Today those emails sit in a shared inbox and a human re-keys them into the CRM, losing source attribution and follow-up time.
 
-Inbox-Agent watches the inbox for new messages, extracts the lead's identity and intent into structured data with an AI model, and upserts a Contact into HubSpot — writing the latest inquiry as custom properties and appending a timeline Note for full history. Works out of the box in any HubSpot tier with no custom object requirements.
+LeadCatch watches the inbox for new messages, extracts the lead's identity and intent into structured data with an AI model, and upserts a Contact into HubSpot — writing the latest inquiry as custom properties and appending a timeline Note for full history. Works out of the box in any HubSpot tier with no custom object requirements.
 
 ## Architecture
 
@@ -152,7 +152,7 @@ Every processed message gets an `/auditLog` document in Firestore. A small admin
 
 HubSpot is building a first-party AI agent platform — **Breeze** — where users interact with an AI in natural language and the agent calls registered tools to fulfill requests. Agent Tools are custom HTTP endpoints your app exposes; HubSpot signs and POSTs to them when the agent decides to invoke them. They use the same `X-HubSpot-Signature` verification as webhooks and are configured via `*-hsmeta.json` files in `src/app/workflow-actions/`.
 
-**Why this is additive, not a replacement:** Inbox-Agent's core is event-driven and fully automatic — the webhook pipeline runs without any human in the loop. Breeze Agent Tools are user-invoked (someone asks Breeze a question or a workflow step fires), so they cannot replace the autonomous inbox listener. But the same Cloud Run service can host both: the webhook routes handle autonomous processing; additional routes serve as `actionUrl` endpoints for agent tools.
+**Why this is additive, not a replacement:** LeadCatch's core is event-driven and fully automatic — the webhook pipeline runs without any human in the loop. Breeze Agent Tools are user-invoked (someone asks Breeze a question or a workflow step fires), so they cannot replace the autonomous inbox listener. But the same Cloud Run service can host both: the webhook routes handle autonomous processing; additional routes serve as `actionUrl` endpoints for agent tools.
 
 ### Planned Agent Tools (v2)
 

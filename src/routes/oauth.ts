@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { randomUUID } from 'crypto';
-import { savePortal } from '../lib/firestore.js';
+import { savePortal, getBilling, saveBilling } from '../lib/firestore.js';
+import { isBillingActive } from '../lib/stripe.js';
 import { ensureInboxAgentProperties } from '../lib/hubspot-properties.js';
 import type { Portal } from '../types/index.js';
 
@@ -131,7 +132,24 @@ oauthRouter.get('/callback', async (req, res) => {
     console.log(`inbox_agent properties ensured for portal ${portalId}`);
 
     console.log(`Installed on portal ${portalId} (${portal.hub_domain})`);
-    res.redirect(`https://app.hubspot.com/contacts/${portalId}`);
+
+    // Billing gate. A reinstall that still has an active subscription (e.g. the user
+    // uninstalled only to refresh the connection) reattaches seamlessly: clear the
+    // detached flag and skip Checkout. Everyone else goes to Checkout to subscribe.
+    const billing = await getBilling(portalId);
+    if (billing && isBillingActive(billing.status)) {
+      res.redirect(`https://app.hubspot.com/contacts/${portalId}`);
+      return;
+    }
+    if (billing?.status === 'detached' && billing.stripe_subscription_id) {
+      // Subscription was left intact at uninstall — reattach within the grace window.
+      await saveBilling(portalId, { status: 'active', detached_at: null });
+      console.log(`Reattached billing on reinstall — portal=${portalId}`);
+      res.redirect(`https://app.hubspot.com/contacts/${portalId}`);
+      return;
+    }
+
+    res.redirect(`${process.env.SERVICE_URL}/billing/checkout?portalId=${portalId}`);
   } catch (err) {
     console.error('OAuth callback error', err);
     res.status(500).send('Installation failed. Please try again.');

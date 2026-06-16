@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { syncUninstallEvents } from '../lib/hubspot-journal.js';
+import { syncUninstallEvents, sweepDetachedBilling } from '../lib/hubspot-journal.js';
 import { verifyGoogleOidcToken } from '../lib/verify-google-oidc.js';
 
 export const journalRouter = Router();
@@ -14,8 +14,10 @@ const verifyCloudScheduler = verifyGoogleOidcToken(
 journalRouter.post('/sync', verifyCloudScheduler, async (req, res) => {
   try {
     const processed = await syncUninstallEvents();
-    console.log(`Journal sync complete — ${processed} uninstall(s) processed`);
-    res.json({ ok: true, processed });
+    // Reuse this scheduler tick to cancel subscriptions whose grace period elapsed.
+    const canceled = await sweepDetachedBilling();
+    console.log(`Journal sync complete — ${processed} uninstall(s) processed, ${canceled} subscription(s) canceled`);
+    res.json({ ok: true, processed, canceled });
   } catch (err) {
     console.error('Journal sync error', err);
     res.status(500).json({ error: 'Journal sync failed' });

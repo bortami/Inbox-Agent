@@ -10,12 +10,19 @@ import { settingsRouter } from './routes/settings.js';
 import { ownersRouter } from './routes/owners.js';
 import { journalRouter } from './routes/journal.js';
 import { agentToolsRouter } from './routes/agent-tools.js';
+import { billingRouter, stripeWebhookRouter } from './routes/billing.js';
 import { ensureUninstallSubscription } from './lib/hubspot-journal.js';
 
 const app = express();
 
 // Cloud Run sits behind a proxy; trust it so rate-limit and cookies see the real client IP/scheme.
 app.set('trust proxy', 1);
+
+// Stripe webhook must be verified against the raw request body — mount it BEFORE
+// express.json() so the global JSON parser never consumes the body. It uses
+// express.raw() internally. The rest of the billing routes are mounted after JSON
+// parsing, alongside the other routers below.
+app.use('/billing', stripeWebhookRouter);
 
 // Capture raw body for HubSpot signature verification before JSON parsing
 app.use(
@@ -52,10 +59,11 @@ app.use('/settings', settingsRouter);
 app.use('/owners', ownersRouter);
 app.use('/journal', journalRouter);
 app.use('/agent-tools', agentToolsRouter);
+app.use('/billing', billingRouter);
 
 const PORT = parseInt(process.env.PORT ?? '8080', 10);
 app.listen(PORT, () => {
-  console.log(`Inbox Agent listening on port ${PORT}`);
+  console.log(`LeadCatch listening on port ${PORT}`);
   console.log(`AI provider: ${process.env.AI_PROVIDER ?? 'claude'}`);
 
   // Ensure the journal subscription for APP_UNINSTALL events is registered.

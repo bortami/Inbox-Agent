@@ -31,7 +31,12 @@ firestore:
     field: created_at
     seconds: 86400  # 24 hours
 
+firebase:
+  project_id: inbox-agent-498701
+  project_number: 483790599125
+  project_name: inbox-agent
+
 support:
   email: support@redanthos.com
-  docs_url: https://redanthos.com/inbox-ai-agent/docs
+  docs_url: https://redanthos.com/leadcatch/docs
   support_url: https://redanthos.com/support

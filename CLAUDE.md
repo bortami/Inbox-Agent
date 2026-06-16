@@ -1,4 +1,4 @@
-# Inbox-Agent — Claude Code Guide
+# LeadCatch — Claude Code Guide
 
 ## What this project is
 

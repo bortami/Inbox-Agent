@@ -84,7 +84,7 @@ Goal: handle the full install/uninstall lifecycle and give per-portal configurat
 
 ## Phase 4 — Breeze Agent Tools
 
-Goal: register Inbox-Agent as a first-class Breeze AI participant — a strong differentiator for Marketplace listing and certification.
+Goal: register LeadCatch as a first-class Breeze AI participant — a strong differentiator for Marketplace listing and certification.
 
 - [x] Add `get_recent_leads` tool (`GET_DATA`): queries Firestore audit log by portal, source, and date range; returns structured list for Breeze
 - [x] Add `get_extraction_detail` tool (`GET_DATA`): returns full audit log entry (extraction JSON, confidence, outcome) for a given `message_id`
@@ -125,10 +125,26 @@ Goal: generalize beyond the first source once real email data is available.
 - [ ] Add 4–5 additional sources (AutoTrader, Boat Trader, Facebook Marketplace, dealer site forms, generic)
 - [ ] "Unknown / freeform" bucket — extractor handles direct buyer emails without a template
 
+## Phase 8 — Stripe Billing
+
+Goal: gate access behind a paid subscription, bill per-lead usage, and handle the cancel/uninstall lifecycle cleanly. See `src/lib/stripe.ts`, `src/routes/billing.ts`. Dashboard/env setup: [docs/STRIPE_SETUP.md](docs/STRIPE_SETUP.md).
+
+- [x] `BillingRecord` in `src/types/index.ts` + `/billing/{portalId}` Firestore collection (separate from `/portals` so it survives uninstall)
+- [x] Stripe client + helpers (`src/lib/stripe.ts`): metered usage via Billing Meters (`event_name: lead_processed`, `messageId` as idempotency key), `isBillingActive`, `mapSubscriptionStatus`, `cancelSubscription`
+- [x] `src/routes/billing.ts`: `GET /billing/checkout` (Checkout session), `GET /billing/portal` (Billing Portal), `GET /billing/status`, `POST /billing/webhook` (raw-body, signature-verified; mounted before `express.json()`)
+- [x] OAuth callback: new portals → Checkout; reinstall with intact subscription → reattach + skip Checkout
+- [x] Task-handler gate **before AI extraction**: unpaid → audit `skipped_unpaid` (logs webhook event for future replay), no AI/HubSpot cost. Record metered usage on successful Contact write
+- [x] Uninstall → mark billing `detached` (NOT cancel — user may be refreshing the connection); grace-period sweep cancels after `BILLING_GRACE_DAYS` (default 14), reusing the `/journal/sync` scheduler
+- [x] Settings page: billing status + Subscribe/Manage buttons opening Stripe in a new tab (Stripe blocks iframing)
+- [ ] **Set up in Stripe dashboard:** one meter (`event_name: lead_processed`); one product with a flat + metered price per tier (Starter/Growth/Pro/Enterprise); Billing Portal config with plan-switching across all 4 tiers
+- [ ] **Set env/secrets** (outside deploy.sh): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, the 8 per-tier `STRIPE_PRICE_<TIER>_FLAT/_METERED`, optional `STRIPE_PORTAL_LOGIN_URL` (static fallback), `STRIPE_DEFAULT_TIER`, `BILLING_GRACE_DAYS`
+- [ ] **Add Firestore composite index** for the sweep query: `billing` collection, `status` (==) + `detached_at` (<=)
+- [ ] Register the Stripe webhook endpoint (`/billing/webhook`) in the Stripe dashboard and store its signing secret
+- [ ] Universal customer portal across all Red Anthos products — lives in the Red Anthos Dev site, not this app
+
 ## Later / maybe
 
 - [ ] Auto-reply or workflow trigger on Contact update (e.g., enroll in a sequence when `inbox_agent_lead_source` is set)
 - [ ] Outbound thread monitoring (treat dealer replies as engagement signal)
 - [ ] ROI-per-source dashboard inside HubSpot (custom report bundled with the app)
 - [ ] Multi-channel: chat, SMS, web form sources beyond Conversations email
-- [ ] Billing / paid tiers if distributed at scale

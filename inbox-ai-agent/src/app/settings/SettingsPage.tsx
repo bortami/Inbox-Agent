@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   hubspot,
   Button,
+  Divider,
   Flex,
   Heading,
+  Link,
   LoadingSpinner,
   Select,
+  Text,
   Toggle,
 } from '@hubspot/ui-extensions';
 import type { ExtensionPointApiActions, SettingsContext } from '@hubspot/ui-extensions';
@@ -46,14 +49,33 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   const [reviewOwnerEmail, setReviewOwnerEmail] = useState('');
   const [notesEnabled, setNotesEnabled] = useState(true);
 
+  const [billingStatus, setBillingStatus] = useState<string>('none');
+  const [billingTier, setBillingTier] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState<string>('starter');
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [stripeUrl, setStripeUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch current settings and paginated owners list in parallel (first page of owners).
-        const [settingsRes, firstOwnersRes] = await Promise.all([
+        // Fetch current settings, owners (first page), and billing status in parallel.
+        const [settingsRes, firstOwnersRes, billingRes] = await Promise.all([
           hubspot.fetch(`${CLOUD_RUN_URL}/settings?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/owners?portalId=${portalId}`),
+          hubspot.fetch(`${CLOUD_RUN_URL}/billing/status?portalId=${portalId}`),
         ]);
+
+        if (billingRes?.ok) {
+          const b = (await billingRes.json().catch(() => null)) as {
+            status?: string;
+            tier?: string | null;
+          } | null;
+          if (b?.status) setBillingStatus(b.status);
+          if (b?.tier) {
+            setBillingTier(b.tier);
+            setSelectedTier(b.tier);
+          }
+        }
 
         if (!settingsRes) {
           actions.addAlert({
@@ -170,6 +192,36 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
     );
   };
 
+  // Fetches a Stripe-hosted URL (Checkout or Billing Portal) and surfaces it as a
+  // clickable Link that opens in a new tab. Stripe sets frame-ancestors/X-Frame-Options
+  // that block iframing its hosted pages, so we must NOT embed them — a new-tab link is
+  // the supported pattern. hubspot.fetch also can't follow the 303, so the endpoints
+  // return { url }.
+  const fetchStripeUrl = async (path: string) => {
+    setBillingBusy(true);
+    setStripeUrl(null);
+    try {
+      const res = await hubspot.fetch(`${CLOUD_RUN_URL}${path}`);
+      if (!res?.ok) {
+        actions.addAlert({ type: 'danger', message: 'Could not reach Stripe. Please try again.' });
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { url?: string } | null;
+      if (data?.url) {
+        setStripeUrl(data.url);
+      } else {
+        actions.addAlert({ type: 'danger', message: 'Stripe did not return a URL.' });
+      }
+    } catch {
+      actions.addAlert({ type: 'danger', message: 'Could not reach Stripe. Please try again.' });
+    } finally {
+      setBillingBusy(false);
+    }
+  };
+
+  const isActive = billingStatus === 'active' || billingStatus === 'trialing';
+  const hasCustomer = billingStatus !== 'none';
+
   const save = async () => {
     setSaving(true);
     try {
@@ -221,6 +273,56 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
       <Button variant="primary" onClick={save} disabled={saving}>
         {saving ? 'Saving…' : 'Save settings'}
       </Button>
+
+      <Divider />
+
+      <Heading>Billing</Heading>
+
+      <Text>
+        Subscription status: <Text format={{ fontWeight: 'bold' }} inline>{billingStatus}</Text>
+        {billingTier && <> · Plan: <Text format={{ fontWeight: 'bold' }} inline>{billingTier}</Text></>}
+        {!isActive && '. Leads are not processed until your subscription is active.'}
+      </Text>
+
+      {hasCustomer ? (
+        <>
+          <Button onClick={() => fetchStripeUrl(`/billing/portal?portalId=${portalId}`)} disabled={billingBusy}>
+            {billingBusy ? 'Preparing…' : 'Manage subscription'}
+          </Button>
+          <Text variant="microcopy">
+            Change plan, update payment, or cancel in the Stripe billing portal.
+          </Text>
+        </>
+      ) : (
+        <>
+          <Select
+            label="Plan"
+            value={selectedTier}
+            options={[
+              { label: 'Starter', value: 'starter' },
+              { label: 'Growth', value: 'growth' },
+              { label: 'Pro', value: 'pro' },
+              { label: 'Enterprise', value: 'enterprise' },
+            ]}
+            onChange={value => setSelectedTier(String(value))}
+          />
+          <Button
+            variant="primary"
+            onClick={() => fetchStripeUrl(`/billing/checkout?portalId=${portalId}&tier=${selectedTier}&format=json`)}
+            disabled={billingBusy}
+          >
+            {billingBusy ? 'Preparing…' : 'Subscribe'}
+          </Button>
+        </>
+      )}
+
+      {stripeUrl && (
+        <Text>
+          <Link href={{ url: stripeUrl, external: true }}>
+            {hasCustomer ? 'Open the Stripe billing portal →' : 'Continue to secure Stripe checkout →'}
+          </Link>
+        </Text>
+      )}
     </Flex>
   );
 };

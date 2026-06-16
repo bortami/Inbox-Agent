@@ -3,31 +3,31 @@ const PROPERTY_GROUP = 'inbox_agent';
 const PROPERTIES = [
   {
     name: 'inbox_agent_lead_source',
-    label: 'Lead Source (Inbox Agent)',
+    label: 'Lead Source (LeadCatch)',
     type: 'string',
     fieldType: 'text',
-    description: 'Source identified by Inbox Agent (e.g. CarGurus, Boat Trader, Dealer Site Form)',
+    description: 'Source identified by LeadCatch (e.g. CarGurus, Boat Trader, Dealer Site Form)',
   },
   {
     name: 'inbox_agent_inquiry_message',
-    label: 'Inquiry Message (Inbox Agent)',
+    label: 'Inquiry Message (LeadCatch)',
     type: 'string',
     fieldType: 'textarea',
     description: 'Freeform buyer message extracted from the most recent lead email',
   },
   {
     name: 'inbox_agent_listing_ref',
-    label: 'Listing Reference (Inbox Agent)',
+    label: 'Listing Reference (LeadCatch)',
     type: 'string',
     fieldType: 'text',
     description: 'VIN, stock number, or listing URL extracted from the most recent lead email',
   },
   {
     name: 'inbox_agent_processed_at',
-    label: 'Processed At (Inbox Agent)',
+    label: 'Processed At (LeadCatch)',
     type: 'string',
     fieldType: 'text',
-    description: 'ISO 8601 timestamp of the most recent email processed by Inbox Agent',
+    description: 'ISO 8601 timestamp of the most recent email processed by LeadCatch',
   },
 ] as const;
 
@@ -52,7 +52,7 @@ export async function ensureInboxAgentProperties(accessToken: string): Promise<v
     accessToken,
     'POST',
     '/crm/v3/properties/contacts/groups',
-    { name: PROPERTY_GROUP, label: 'Inbox Agent' },
+    { name: PROPERTY_GROUP, label: 'LeadCatch' },
   );
 
   if (!groupOk && groupStatus !== 409) {

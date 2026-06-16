@@ -2,7 +2,7 @@
   "uid": "inbox_ai_agent_app",
   "type": "app",
   "config": {
-    "name": "Inbox Agent",
+    "name": "LeadCatch",
     "description": "Converts inbound emails in HubSpot Conversations Inbox into structured Contact records using AI extraction.",
     "distribution": "marketplace",
     "auth": {

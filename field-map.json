@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "Field mapping and definitions for Inbox-Agent. Covers the AI extraction schema, HubSpot Contact properties, Firestore document shapes, and Note engagement structure.",
+  "description": "Field mapping and definitions for LeadCatch. Covers the AI extraction schema, HubSpot Contact properties, Firestore document shapes, and Note engagement structure.",
 
   "extractionSchema": {
     "description": "JSON schema enforced on every AI model call (ClaudeExtractor / GeminiExtractor). Low-confidence or non-lead results are logged only — never written to HubSpot.",

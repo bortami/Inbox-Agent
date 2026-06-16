@@ -1,5 +1,5 @@
 import { Firestore, FieldValue, type Query } from '@google-cloud/firestore';
-import type { Portal, AuditLog } from '../types/index.js';
+import type { Portal, AuditLog, BillingRecord } from '../types/index.js';
 
 let _db: Firestore | null = null;
 
@@ -62,6 +62,45 @@ export async function deletePortalData(portalId: string): Promise<void> {
     auditSnapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
   }
+  // NOTE: /billing/{portalId} is intentionally NOT deleted here. Uninstall must
+  // not lose the Stripe subscription id — the grace-period sweep needs it to
+  // cancel later, and a reinstall within the window reattaches to it.
+}
+
+// --- Billing (separate collection that survives uninstall) ---
+
+export async function getBilling(portalId: string): Promise<BillingRecord | null> {
+  const doc = await getDb().collection('billing').doc(portalId).get();
+  return doc.exists ? (doc.data() as BillingRecord) : null;
+}
+
+export async function saveBilling(
+  portalId: string,
+  data: Partial<BillingRecord>,
+): Promise<void> {
+  await getDb()
+    .collection('billing')
+    .doc(portalId)
+    .set(
+      { ...data, portal_id: portalId, updated_at: Date.now() },
+      { merge: true },
+    );
+}
+
+// Returns detached billing records whose grace period has elapsed and that still
+// have a subscription to cancel — driven by the journal-sync scheduler.
+export async function getExpiredDetachedBilling(
+  cutoffMs: number,
+): Promise<BillingRecord[]> {
+  const snapshot = await getDb()
+    .collection('billing')
+    .where('status', '==', 'detached')
+    .where('detached_at', '<=', cutoffMs)
+    .get();
+
+  return snapshot.docs
+    .map(doc => doc.data() as BillingRecord)
+    .filter(b => b.stripe_subscription_id);
 }
 
 export async function getJournalOffset(): Promise<string | null> {

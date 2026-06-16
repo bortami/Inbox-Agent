@@ -1,4 +1,4 @@
-# Inbox-Agent
+# LeadCatch
 
 A HubSpot public app that turns inbound emails into structured Contact records.
 
