@@ -19,6 +19,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "google-auth-library": "^9.15.0",
+    "jose": "^6.2.3",
     "stripe": "^22.2.1"
   },
   "devDependencies": {

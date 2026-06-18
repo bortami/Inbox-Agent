@@ -4,6 +4,26 @@ Audience: the **Red Anthos Dev** team. This is the contract Red Anthos must impl
 the LeadCatch HubSpot app can do account-first onboarding. LeadCatch-side work is tracked
 separately in `docs/ONBOARDING_PLAN.md`.
 
+> **Status (Red Anthos side — built & deployed live):** the login/signup pages, handoff
+> JWT (RS256 + JWKS), Stripe-customer creation, and the §3 lookup are implemented and
+> deployed on `https://redanthos.com`. Concrete endpoints for LeadCatch to integrate:
+> - JWKS: `https://redanthos.com/.well-known/jwks.json` — verify `iss=https://redanthos.com`,
+>   `aud=leadcatch`, `exp`; reject reused `jti`. (`kid` `ra-handoff-1`, RS256, 300s TTL.)
+> - §3 lookup: `GET https://redanthos.com/v1/accounts/<id>/stripe-customer`, header
+>   `X-Api-Key: <key>` (shared out-of-band).
+>
+> **LeadCatch side — built.** Both entry points are implemented:
+> - Website `return_to`: `GET /oauth/start?ra_token=…` verifies the handoff, stashes the
+>   account in a signed cookie, then runs HubSpot OAuth; the callback links the account and
+>   reuses its Stripe customer. Point Red Anthos's pricing-page redirect at `…/oauth/start`.
+> - Marketplace partner sign-in: `GET /install` (`step=authorize`→Red Anthos login,
+>   `step=finalize`→link + token exchange) with `/install/return` receiving `?ra_token`.
+>   Finalize ends in the **same pay-at-install Checkout** as the website flow (Checkout's
+>   `success_url` = HubSpot's `returnUrl`), so both entry points are identical — there is
+>   no "subscribe" button on the Settings page.
+> Verification (`src/lib/redanthos.ts`): RS256 via JWKS, `iss`/`aud`/`exp`, `jti` replay
+> rejection. §3 lookup wired as the Checkout fallback. Config: `REDANTHOS_*` env vars.
+
 **TL;DR for Red Anthos:** you build (1) a hosted login/signup page, (2) a signed handoff
 JWT that includes a Stripe `customer` id, and (3) a fallback endpoint to look that customer
 up by account. You own user accounts and the Stripe **customer** object. You do **not**
@@ -44,7 +64,8 @@ LeadCatch share **one Stripe account** (confirmed).
 ## 1. Hosted login/signup page
 
 A page LeadCatch can redirect the browser to during install, e.g.
-`https://accounts.redanthos.dev/login`.
+`https://redanthos.com/app/login`. (The account area lives on the apex domain — same
+Firebase Hosting site as the marketing site — not an `accounts.` subdomain.)
 
 Accepts query params:
 - `return_to` (required) — absolute LeadCatch URL to redirect back to after auth.
@@ -60,15 +81,14 @@ Must be safe to load in an embedded browser context (HubSpot frames the install 
 
 A compact JWT, signed by Red Anthos, that LeadCatch verifies to trust the account.
 
-**Signing:** RS256 with a Red Anthos private key; expose the public key via a JWKS URL
-(`https://accounts.redanthos.dev/.well-known/jwks.json`) so LeadCatch verifies without a
-shared secret. (HS256 with a shared secret is acceptable as a simpler v1 if a JWKS is too
-much — state which.)
+**Signing:** RS256 with a Red Anthos private key; the public key is served via JWKS at
+`https://redanthos.com/.well-known/jwks.json` so LeadCatch verifies without a shared
+secret. (Decided & built: RS256 + JWKS, `kid` `ra-handoff-1`. The endpoint is live.)
 
 **Claims:**
 ```
 {
-  "iss": "https://accounts.redanthos.dev",
+  "iss": "https://redanthos.com",
   "aud": "leadcatch",
   "sub": "<redanthos_account_id>",   // stable, opaque, never reused
   "email": "<account email>",
@@ -94,10 +114,10 @@ its own per-tier Checkout against that existing customer (rather than creating a
 Most of the time the `stripe_customer_id` arrives in the handoff JWT (§2) and no call is
 needed. This endpoint is the fallback / source of truth:
 
-`GET https://api.redanthos.dev/v1/accounts/<account_id>/stripe-customer`
+`GET https://redanthos.com/v1/accounts/<account_id>/stripe-customer`
 
-Auth: service-to-service (LeadCatch → Red Anthos) — a Red Anthos-issued API key or
-mTLS. Specify which.
+Auth: service-to-service (LeadCatch → Red Anthos). Decided & built: a Red Anthos-issued
+static API key, sent in the `X-Api-Key` header. (The key value is shared out-of-band.)
 
 Response:
 ```

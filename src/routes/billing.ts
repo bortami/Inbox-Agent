@@ -10,12 +10,27 @@ import {
 } from '../lib/stripe.js';
 import { getPortal, getBilling, saveBilling } from '../lib/firestore.js';
 import { verifyHubSpotSignature } from '../lib/hubspot-verify.js';
+import { lookupStripeCustomer } from '../lib/redanthos.js';
 
 export const billingRouter = Router();
 
 // Stripe webhook lives on its own router so server.ts can mount it BEFORE the global
 // express.json() — signature verification needs the unparsed raw body.
 export const stripeWebhookRouter = Router();
+
+// Guards the Checkout success_url against open redirects: only HubSpot app hosts are
+// allowed as a post-Checkout landing target.
+function isHubSpotReturnUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    return (
+      u.protocol === 'https:' &&
+      (u.hostname === 'app.hubspot.com' || u.hostname.endsWith('.hubspot.com'))
+    );
+  } catch {
+    return false;
+  }
+}
 
 // GET /billing/checkout?portalId=…&tier=… — creates a Stripe Checkout session
 // (subscription mode: the tier's flat price + its metered price) and redirects the
@@ -35,6 +50,15 @@ billingRouter.get('/checkout', async (req, res) => {
   }
   const tier = isValidTier(tierParam) ? tierParam : DEFAULT_TIER;
 
+  // Where Checkout sends the browser on success. Defaults to the portal home; the
+  // marketplace install flow passes HubSpot's `returnUrl` so install→pay→HubSpot is one
+  // continuous path. Only allow HubSpot return URLs — this is an open-redirect surface.
+  const returnUrlParam = req.query.returnUrl as string | undefined;
+  const successUrl =
+    returnUrlParam && isHubSpotReturnUrl(returnUrlParam)
+      ? returnUrlParam
+      : `https://app.hubspot.com/contacts/${portalId}`;
+
   try {
     const portal = await getPortal(portalId);
     if (!portal) {
@@ -45,17 +69,28 @@ billingRouter.get('/checkout', async (req, res) => {
     const billing = await getBilling(portalId);
     const prices = tierPrices(tier);
 
+    // Resolve the Stripe customer to run Checkout against. Red Anthos owns the customer
+    // (cross-product identity): prefer the one stamped on our billing record at install;
+    // if the portal is linked to a Red Anthos account but the customer wasn't carried in
+    // the handoff JWT, fall back to the §3 lookup. Persist it so we only look up once.
+    let customerId = billing?.stripe_customer_id ?? null;
+    if (!customerId && billing?.redanthos_account_id) {
+      customerId = await lookupStripeCustomer(billing.redanthos_account_id);
+      if (customerId) {
+        await saveBilling(portalId, { stripe_customer_id: customerId });
+      }
+    }
+
     const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       line_items: [
         { price: prices.flat, quantity: 1 },
         { price: prices.metered }, // metered: no quantity
       ],
-      // Reuse an existing Stripe customer if this portal has one (e.g. reinstall);
-      // otherwise let Checkout collect the email. Keying by email supports future
-      // cross-product reconciliation in the Red Anthos universal portal.
-      ...(billing?.stripe_customer_id
-        ? { customer: billing.stripe_customer_id }
+      // Reuse the Red Anthos / existing Stripe customer if we have one; otherwise let
+      // Checkout collect the email (keyed by email for cross-product reconciliation).
+      ...(customerId
+        ? { customer: customerId }
         : billing?.customer_email
           ? { customer_email: billing.customer_email }
           : {}),
@@ -63,7 +98,7 @@ billingRouter.get('/checkout', async (req, res) => {
       metadata: { portalId, tier },
       // Stamp the tier on the subscription so subscription.* webhooks can recover it.
       subscription_data: { metadata: { portalId, tier } },
-      success_url: `https://app.hubspot.com/contacts/${portalId}`,
+      success_url: successUrl,
       cancel_url: `${process.env.SERVICE_URL}/billing/checkout?portalId=${portalId}&tier=${tier}`,
     });
 

@@ -194,6 +194,14 @@ Open: https://console.cloud.google.com/firestore/databases/-default-/ttl?project
 3. Timestamp field: `created_at`
 4. Click **Create**
 
+Repeat for the two account-first-onboarding collections (created on first install via the
+Red Anthos handoff). Both auto-expire so used tokens / stale install states are cleaned up:
+
+| Collection group | Timestamp field | Purpose |
+|---|---|---|
+| `usedJtis` | `created_at` | Handoff-JWT replay protection (jti seen-once); 24h is plenty for a 5-min token |
+| `installStates` | `expires_at` | Marketplace `state` between authorize/finalize; 10-min lifetime |
+
 ---
 
 ## Verification

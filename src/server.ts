@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { webhookRouter } from './routes/webhook.js';
 import { oauthRouter } from './routes/oauth.js';
+import { installRouter } from './routes/install.js';
 import { taskRouter } from './routes/task-handler.js';
 import { replayRouter } from './routes/replay.js';
 import { settingsRouter } from './routes/settings.js';
@@ -53,6 +54,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/webhook', webhookLimiter, webhookRouter);
 app.use('/oauth', oauthLimiter, oauthRouter);
+app.use('/install', oauthLimiter, installRouter);
 app.use('/tasks', taskRouter);
 app.use('/replay', replayRouter);
 app.use('/settings', settingsRouter);

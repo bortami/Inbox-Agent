@@ -1,7 +1,12 @@
 # Onboarding & Account-First Install — Plan
 
-Status: **planning only** — no code in this repo yet. The Red Anthos account/auth
-system is a prerequisite built in the **Red Anthos Dev** project, not here.
+Status: **built.** The LeadCatch side of account-first onboarding is implemented —
+`src/lib/redanthos.ts` (handoff JWT verify + §3 lookup), `src/routes/install.ts`
+(marketplace partner sign-in), and the `/oauth/start` website entry point in
+`src/routes/oauth.ts`, with account↔portal linking + 1:1:1 enforcement in
+`src/lib/firestore.ts`. The Red Anthos account/auth system (the prerequisite) lives in
+the **Red Anthos Dev** project. Remaining work is operational: opt the listing into the
+seamless install flow + partner sign in, and set the `REDANTHOS_*` env vars.
 
 ## Goal
 

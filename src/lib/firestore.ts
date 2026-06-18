@@ -1,5 +1,5 @@
 import { Firestore, FieldValue, type Query } from '@google-cloud/firestore';
-import type { Portal, AuditLog, BillingRecord } from '../types/index.js';
+import type { Portal, AuditLog, BillingRecord, InstallState } from '../types/index.js';
 
 let _db: Firestore | null = null;
 
@@ -87,6 +87,21 @@ export async function saveBilling(
     );
 }
 
+// Finds the billing record (if any) already linked to a Red Anthos account. Used to
+// enforce the 1 account → 1 portal rule during account-first install: a second portal
+// trying to install under an already-linked account is rejected (REDANTHOS_DEV_SPEC §6).
+export async function getBillingByAccountId(
+  accountId: string,
+): Promise<BillingRecord | null> {
+  const snapshot = await getDb()
+    .collection('billing')
+    .where('redanthos_account_id', '==', accountId)
+    .limit(1)
+    .get();
+
+  return snapshot.empty ? null : (snapshot.docs[0].data() as BillingRecord);
+}
+
 // Returns detached billing records whose grace period has elapsed and that still
 // have a subscription to cancel — driven by the journal-sync scheduler.
 export async function getExpiredDetachedBilling(
@@ -169,4 +184,38 @@ export async function getRecentAuditLogs(
     .get();
 
   return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as AuditLog) }));
+}
+
+// --- Red Anthos handoff: replay protection + install state (both TTL collections) ---
+
+// Atomically records a handoff JWT's `jti` the first time it's seen. Returns false if it
+// was already used (replay). A 24h Firestore TTL on /usedJtis cleans these up — handoff
+// tokens are short-lived (5 min), so 24h far outlives any legitimate replay window.
+export async function consumeJti(jti: string): Promise<boolean> {
+  const ref = getDb().collection('usedJtis').doc(jti);
+  try {
+    await ref.create({ created_at: FieldValue.serverTimestamp() });
+    return true;
+  } catch (err: unknown) {
+    // create() fails with ALREADY_EXISTS (code 6) if the jti was already consumed.
+    if ((err as { code?: number }).code === 6) return false;
+    throw err;
+  }
+}
+
+export async function saveInstallState(state: InstallState): Promise<void> {
+  await getDb().collection('installStates').doc(state.state).set(state);
+}
+
+// Reads and deletes the install state in one shot — state tokens are single-use. Returns
+// null if missing or expired (a stale doc the TTL sweep hasn't reaped yet).
+export async function consumeInstallState(
+  state: string,
+): Promise<InstallState | null> {
+  const ref = getDb().collection('installStates').doc(state);
+  const doc = await ref.get();
+  if (!doc.exists) return null;
+  await ref.delete();
+  const data = doc.data() as InstallState;
+  return data.expires_at > Date.now() ? data : null;
 }

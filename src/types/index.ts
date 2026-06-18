@@ -36,7 +36,24 @@ export interface BillingRecord {
   customer_email?: string | null;     // keyed by email for future cross-product reconciliation
   current_period_end?: number;        // Unix ms
   detached_at?: number | null;        // Unix ms the portal was uninstalled; drives grace-period sweep
+  // Red Anthos account link (durable cross-product identity). Set during account-first
+  // install; enforces the 1 account → 1 portal rule. See docs/REDANTHOS_DEV_SPEC.md §6.
+  redanthos_account_id?: string | null;
+  linked_at?: number | null;          // Unix ms the account ↔ portal link was established
   updated_at: number;
+}
+
+// Short-lived record persisted between the partner-sign-in `authorize` and `finalize`
+// steps. Keyed by the random `state` token we hand to HubSpot; holds the verified
+// Red Anthos handoff so `finalize` can link the portal without re-verifying the JWT.
+export interface InstallState {
+  state: string;
+  redanthos_account_id: string;
+  email: string;
+  tier?: BillingTier | null;
+  stripe_customer_id?: string | null;
+  expires_at: number;   // Unix ms; also drives the Firestore TTL policy on /installStates
+  created_at: number;
 }
 
 export interface DedupeKey {
