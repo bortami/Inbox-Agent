@@ -7,7 +7,10 @@ import {
   Heading,
   Link,
   LoadingSpinner,
+  ProgressBar,
   Select,
+  Statistics,
+  StatisticsItem,
   Text,
   Tile,
   Toggle,
@@ -39,6 +42,17 @@ interface Settings {
 // string as a distinct option value, so we map this to inbox_id: null on save.
 const ALL_INBOXES = '__all__';
 
+// Colors the usage progress bar by how close the portal is to its included allotment:
+// green under 80%, yellow approaching the cap, red once usage meets/exceeds it (overage
+// billing territory). maxValue<=0 guards a divide-by-zero on an unset allotment.
+function usageVariant(used: number, allotted: number): 'success' | 'warning' | 'danger' {
+  if (allotted <= 0) return 'success';
+  const ratio = used / allotted;
+  if (ratio >= 1) return 'danger';
+  if (ratio >= 0.8) return 'warning';
+  return 'success';
+}
+
 interface SettingsExtensionProps {
   context: SettingsContext;
   actions: ExtensionPointApiActions<'settings'>;
@@ -69,16 +83,31 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   const [billingBusy, setBillingBusy] = useState(false);
   const [stripeUrl, setStripeUrl] = useState<string | null>(null);
 
+  const [usageUsed, setUsageUsed] = useState<number | null>(null);
+  const [usageAllotted, setUsageAllotted] = useState<number | null>(null);
+
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch current settings, owners (first page), inboxes, and billing status in parallel.
-        const [settingsRes, firstOwnersRes, inboxesRes, billingRes] = await Promise.all([
+        // Fetch settings, owners (first page), inboxes, billing status, and usage in parallel.
+        const [settingsRes, firstOwnersRes, inboxesRes, billingRes, usageRes] = await Promise.all([
           hubspot.fetch(`${CLOUD_RUN_URL}/settings?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/owners?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/inboxes?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/billing/status?portalId=${portalId}`),
+          hubspot.fetch(`${CLOUD_RUN_URL}/billing/usage?portalId=${portalId}`),
         ]);
+
+        // Usage powers the leads-used chart + number. Non-fatal if it fails; the panel
+        // just won't render. used/allotted may be null (no active sub, meter unconfigured).
+        if (usageRes?.ok) {
+          const u = (await usageRes.json().catch(() => null)) as {
+            used?: number | null;
+            allotted?: number | null;
+          } | null;
+          if (typeof u?.used === 'number') setUsageUsed(u.used);
+          if (typeof u?.allotted === 'number') setUsageAllotted(u.allotted);
+        }
 
         if (billingRes?.ok) {
           const b = (await billingRes.json().catch(() => null)) as {
@@ -339,6 +368,31 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
               {billingTier && <> · Plan: <Text format={{ fontWeight: 'bold' }} inline>{billingTier}</Text></>}
               {!isActive && '. Leads are not processed until your subscription is active.'}
             </Text>
+
+            {usageUsed !== null && (
+              <>
+                <Statistics>
+                  <StatisticsItem
+                    label="Leads used this month"
+                    number={String(usageUsed)}
+                  >
+                    {usageAllotted !== null ? `of ${usageAllotted} included` : undefined}
+                  </StatisticsItem>
+                </Statistics>
+
+                {usageAllotted !== null && (
+                  <ProgressBar
+                    title="Monthly usage"
+                    value={usageUsed}
+                    maxValue={usageAllotted}
+                    showPercentage={true}
+                    variant={usageVariant(usageUsed, usageAllotted)}
+                    valueDescription={`${usageUsed} out of ${usageAllotted} leads`}
+                    aria-label="Leads used this month"
+                  />
+                )}
+              </>
+            )}
 
             {hasCustomer ? (
               <>

@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import type { BillingStatus, BillingTier } from '../types/index.js';
+import pricing from '../config/pricing.json' with { type: 'json' };
 
 let _stripe: Stripe | null = null;
 
@@ -17,6 +18,14 @@ export const DEFAULT_TIER: BillingTier = (process.env.STRIPE_DEFAULT_TIER as Bil
 
 export function isValidTier(tier: string | undefined): tier is BillingTier {
   return !!tier && (BILLING_TIERS as readonly string[]).includes(tier);
+}
+
+// Monthly lead allotment per tier, shown as the "of Y" in the usage display. The flat +
+// metered pricing model doesn't encode an included quota in Stripe, so the allotment comes
+// from the canonical pricing definition (src/config/pricing.json — same `includedEmails`
+// shown on the pricing page), keeping a single source of truth.
+export function tierAllotment(tier: BillingTier): number {
+  return pricing.tiers[tier].includedEmails;
 }
 
 // Resolves a tier to its flat + metered Stripe price IDs from env. One Product, one
@@ -92,6 +101,66 @@ export async function recordLeadUsage(
     },
     identifier: messageId,
   });
+}
+
+// Current-period lead usage read back from Stripe's metered events: how many
+// `lead_processed` events the customer has accrued in the active billing period.
+export interface LeadUsage {
+  used: number;
+  period_start: number; // Unix ms
+  period_end: number;   // Unix ms
+}
+
+// Rounds a Unix-seconds timestamp down to the minute — meter event summaries require
+// start/end times aligned to a minute boundary.
+function floorToMinute(unixSeconds: number): number {
+  return Math.floor(unixSeconds / 60) * 60;
+}
+
+// Reads the customer's lead usage for the subscription's current billing period from
+// Stripe. Resolves the period window from the live subscription (not the cached billing
+// record) so it's always the true active period, then sums the meter event summaries for
+// the shared lead meter. Requires STRIPE_METER_ID. Returns null if usage can't be read
+// (no active subscription, meter not configured) — callers should treat that as "unknown".
+export async function getMonthlyLeadUsage(
+  stripeCustomerId: string,
+  subscriptionId: string,
+): Promise<LeadUsage | null> {
+  const meterId = process.env.STRIPE_METER_ID;
+  if (!meterId) {
+    console.error('STRIPE_METER_ID not set — cannot read lead usage');
+    return null;
+  }
+
+  const stripe = getStripe();
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
+
+  // In Stripe's current API the billing period lives on the subscription items, not the
+  // subscription itself (matches how the webhook handler reads current_period_end).
+  const item = sub.items.data[0];
+  const periodStart = item?.current_period_start;
+  const periodEnd = item?.current_period_end;
+  if (!periodStart || !periodEnd) return null;
+
+  const startSec = floorToMinute(periodStart);
+  const endSec = floorToMinute(periodEnd);
+
+  // No value_grouping_window → a single summary for the whole range. Sum defensively in
+  // case Stripe returns more than one bucket.
+  let used = 0;
+  for await (const summary of stripe.billing.meters.listEventSummaries(meterId, {
+    customer: stripeCustomerId,
+    start_time: startSec,
+    end_time: endSec,
+  })) {
+    used += summary.aggregated_value;
+  }
+
+  return {
+    used,
+    period_start: periodStart * 1000,
+    period_end: periodEnd * 1000,
+  };
 }
 
 // Cancels a subscription immediately. Used by the grace-period sweep for portals

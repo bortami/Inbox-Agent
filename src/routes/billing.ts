@@ -4,8 +4,11 @@ import {
   getStripe,
   mapSubscriptionStatus,
   isValidTier,
+  isBillingActive,
   tierPrices,
   tierFromSubscription,
+  tierAllotment,
+  getMonthlyLeadUsage,
   DEFAULT_TIER,
 } from '../lib/stripe.js';
 import { getPortal, getBilling, saveBilling } from '../lib/firestore.js';
@@ -181,6 +184,50 @@ billingRouter.get('/status', verifyHubSpotSignature, async (req, res) => {
   } catch (err) {
     console.error('GET /billing/status error', { portalId, err });
     res.status(500).json({ error: 'Could not load billing status' });
+  }
+});
+
+// GET /billing/usage — HubSpot-signed. Returns current-period lead usage for the Settings
+// page chart: { used, allotted, tier, period_end }. `used` is read from Stripe's metered
+// events for the live billing period; `allotted` is the tier's product-policy quota.
+// Returns used:null when usage can't be determined (no active subscription / meter
+// unconfigured) so the UI can show the number it has and hide the chart.
+billingRouter.get('/usage', verifyHubSpotSignature, async (req, res) => {
+  const portalId = req.query.portalId as string | undefined;
+  if (!portalId) {
+    res.status(400).json({ error: 'portalId required' });
+    return;
+  }
+
+  try {
+    const billing = await getBilling(portalId);
+    const tier = billing?.tier ?? null;
+    const allotted = tier && isValidTier(tier) ? tierAllotment(tier) : null;
+
+    // Only meaningful for an active subscription with a customer + subscription on record.
+    if (
+      !isBillingActive(billing?.status) ||
+      !billing?.stripe_customer_id ||
+      !billing?.stripe_subscription_id
+    ) {
+      res.json({ used: null, allotted, tier, period_end: billing?.current_period_end ?? null });
+      return;
+    }
+
+    const usage = await getMonthlyLeadUsage(
+      billing.stripe_customer_id,
+      billing.stripe_subscription_id,
+    );
+
+    res.json({
+      used: usage?.used ?? null,
+      allotted,
+      tier,
+      period_end: usage?.period_end ?? billing.current_period_end ?? null,
+    });
+  } catch (err) {
+    console.error('GET /billing/usage error', { portalId, err });
+    res.status(500).json({ error: 'Could not load usage' });
   }
 });
 

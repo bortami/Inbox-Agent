@@ -1,0 +1,28 @@
+{
+  "tiers": {
+    "starter": {
+      "label": "Starter",
+      "basePriceMonthly": 20.00,
+      "includedEmails": 100,
+      "overagePerEmail": 0.1500
+    },
+    "growth": {
+      "label": "Growth",
+      "basePriceMonthly": 79.00,
+      "includedEmails": 1000,
+      "overagePerEmail": 0.1000
+    },
+    "pro": {
+      "label": "Pro",
+      "basePriceMonthly": 249.00,
+      "includedEmails": 5000,
+      "overagePerEmail": 0.0600
+    },
+    "enterprise": {
+      "label": "Enterprise",
+      "basePriceMonthly": 750.00,
+      "includedEmails": 25000,
+      "overagePerEmail": 0.0350
+    }
+  }
+}
