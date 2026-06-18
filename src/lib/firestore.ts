@@ -204,7 +204,16 @@ export async function consumeJti(jti: string): Promise<boolean> {
 }
 
 export async function saveInstallState(state: InstallState): Promise<void> {
-  await getDb().collection('installStates').doc(state.state).set(state);
+  await getDb()
+    .collection('installStates')
+    .doc(state.state)
+    .set({
+      ...state,
+      // Firestore TTL only acts on Timestamp-typed fields, so the numeric `expires_at`
+      // (kept for the app's own expiry check) can't drive it. This Timestamp does:
+      // the TTL policy targets `ttl_at`, set to the same 10-min horizon.
+      ttl_at: new Date(state.expires_at),
+    });
 }
 
 // Reads and deletes the install state in one shot — state tokens are single-use. Returns

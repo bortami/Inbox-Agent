@@ -200,7 +200,7 @@ Red Anthos handoff). Both auto-expire so used tokens / stale install states are 
 | Collection group | Timestamp field | Purpose |
 |---|---|---|
 | `usedJtis` | `created_at` | Handoff-JWT replay protection (jti seen-once); 24h is plenty for a 5-min token |
-| `installStates` | `expires_at` | Marketplace `state` between authorize/finalize; 10-min lifetime |
+| `installStates` | `ttl_at` | Marketplace `state` between authorize/finalize; 10-min lifetime. (TTL targets the `ttl_at` Timestamp, not the numeric `expires_at` the app reads — Firestore TTL only acts on Timestamp fields.) |
 
 ---
 
