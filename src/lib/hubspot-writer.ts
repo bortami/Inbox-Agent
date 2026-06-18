@@ -12,6 +12,22 @@ interface NoteResponse {
   id: string;
 }
 
+// Error thrown by hsPost when HubSpot returns a non-2xx response. Carries the HTTP
+// status so callers can distinguish permanent client errors (4xx — bad data, never
+// retry) from transient ones (5xx — worth retrying).
+export class HubSpotApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'HubSpotApiError';
+  }
+
+  // A 4xx (except 429 rate-limit) is a permanent failure: retrying the same payload
+  // will fail the same way. 429 and 5xx are transient and should be retried.
+  get isPermanent(): boolean {
+    return this.status >= 400 && this.status < 500 && this.status !== 429;
+  }
+}
+
 async function hsPost<T>(accessToken: string, path: string, body: unknown): Promise<T> {
   const res = await fetch(`https://api.hubapi.com${path}`, {
     method: 'POST',
@@ -23,7 +39,7 @@ async function hsPost<T>(accessToken: string, path: string, body: unknown): Prom
   });
 
   if (!res.ok) {
-    throw new Error(`POST ${path} failed: ${res.status} ${await res.text()}`);
+    throw new HubSpotApiError(res.status, `POST ${path} failed: ${res.status} ${await res.text()}`);
   }
 
   return res.json() as Promise<T>;
@@ -62,16 +78,29 @@ function formatNoteBody(
   return lines.join('\n');
 }
 
+// Returns a normalized, valid email or null. The AI extractor sometimes emits
+// truthy-but-invalid values ("null", "n/a", "not provided", whitespace) that pass a
+// bare `!email` check but get rejected by HubSpot with INVALID_EMAIL — so we validate
+// the shape here, not just truthiness.
+export function normalizeEmail(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const email = raw.trim().toLowerCase();
+  // Minimal but real address shape: something@something.tld with no spaces.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+  return email;
+}
+
 export async function upsertContact(
   accessToken: string,
   extraction: ExtractionResult,
 ): Promise<string> {
-  if (!extraction.email) {
-    throw new Error('Cannot upsert contact: email is null');
+  const email = normalizeEmail(extraction.email);
+  if (!email) {
+    throw new Error('Cannot upsert contact: email is missing or invalid');
   }
 
   const properties: Record<string, string> = {
-    email: extraction.email,
+    email,
     inbox_agent_inquiry_message: extraction.message,
     inbox_agent_processed_at: new Date().toISOString(),
   };

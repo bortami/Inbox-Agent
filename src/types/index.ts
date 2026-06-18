@@ -1,6 +1,10 @@
 export interface PortalSettings {
   review_owner_email?: string | null;
   notes_enabled?: boolean;
+  // Conversations inbox ID to process. null/undefined = process all inboxes (default,
+  // non-breaking for existing installs). When set, only emails whose thread belongs to
+  // this inbox are processed; others are skipped. See task-handler inbox gate.
+  inbox_id?: string | null;
 }
 
 export interface Portal {

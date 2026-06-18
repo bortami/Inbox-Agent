@@ -24,6 +24,20 @@ async function getJson<T>(accessToken: string, path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// Returns the inbox ID the given thread belongs to, or null if HubSpot doesn't report
+// one. inboxId isn't in the thread's default response, so we request it explicitly via
+// ?property=inboxId. Used by the task handler to enforce the per-portal inbox filter.
+export async function fetchThreadInboxId(
+  accessToken: string,
+  threadId: number,
+): Promise<string | null> {
+  const thread = await getJson<{ inboxId?: string }>(
+    accessToken,
+    `/conversations/v3/conversations/threads/${threadId}?property=inboxId`,
+  );
+  return thread.inboxId ?? null;
+}
+
 export async function fetchMessageText(
   accessToken: string,
   threadId: number,

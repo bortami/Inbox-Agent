@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { dedupeKeyExists, createDedupeKey, writeAuditLog, getPortal, getBilling } from '../lib/firestore.js';
 import { getValidToken } from '../lib/token-store.js';
-import { fetchMessageText, assignThread } from '../lib/hubspot-conversations.js';
-import { upsertContact, createNote } from '../lib/hubspot-writer.js';
+import { fetchMessageText, assignThread, fetchThreadInboxId } from '../lib/hubspot-conversations.js';
+import { upsertContact, createNote, normalizeEmail, HubSpotApiError } from '../lib/hubspot-writer.js';
 import { isBillingActive, recordLeadUsage } from '../lib/stripe.js';
 import { getExtractor } from '../ai/extractor-factory.js';
 import { verifyGoogleOidcToken } from '../lib/verify-google-oidc.js';
@@ -60,6 +60,22 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
 
     const token = await getValidToken(portalId.toString());
 
+    // Inbox gate — if the portal has chosen a specific inbox, only process emails whose
+    // thread belongs to it. Checked BEFORE fetching the message body or extracting, so an
+    // email from another inbox costs no AI/extraction work. No selection = process all.
+    const selectedInbox = portal?.settings?.inbox_id;
+    if (selectedInbox) {
+      const threadInbox = await fetchThreadInboxId(token, threadId);
+      if (threadInbox !== selectedInbox) {
+        console.log(
+          `Skipped (other inbox) — portal=${portalId} messageId=${messageId} ` +
+            `threadInbox=${threadInbox ?? 'unknown'} selected=${selectedInbox}`,
+        );
+        res.sendStatus(200);
+        return;
+      }
+    }
+
     // Fetch full message body from Conversations API
     const emailText = await fetchMessageText(token, threadId, messageId);
 
@@ -104,8 +120,12 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
       return;
     }
 
-    // No email → can't dedupe or upsert reliably; queue for review
-    if (!extraction.email) {
+    // No / invalid email → can't dedupe or upsert reliably; queue for review. We
+    // normalize here (not just `!extraction.email`) because the extractor sometimes
+    // emits truthy-but-invalid values ("null", "n/a") that HubSpot rejects with
+    // INVALID_EMAIL — those must route to review, not crash the upsert.
+    const email = normalizeEmail(extraction.email);
+    if (!email) {
       await writeAuditLog({ ...auditBase, message_id: messageId, outcome: 'queued_for_review' });
       const reviewEmail = portal?.settings?.review_owner_email;
       if (reviewEmail) {
@@ -113,14 +133,14 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
           console.warn(`Failed to assign thread ${threadId} for review`, err),
         );
       }
-      console.log(`Queued for review (no email) — messageId=${messageId}`);
+      console.log(`Queued for review (no/invalid email) — messageId=${messageId}`);
       res.sendStatus(200);
       return;
     }
 
     // Dedupe check: scoped to this install to avoid cross-install collisions on quick reinstall
     const listingRef = getListingRef(extraction.listing_reference);
-    const dedupeKey = buildDedupeKey(installId, extraction.email, listingRef);
+    const dedupeKey = buildDedupeKey(installId, email, listingRef);
 
     if (await dedupeKeyExists(dedupeKey)) {
       await writeAuditLog({ ...auditBase, message_id: messageId, outcome: 'skipped' });
@@ -153,7 +173,30 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
     res.sendStatus(200);
   } catch (err) {
     console.error('Task processing error', { portalId, messageId, err });
-    // Return 500 so Cloud Tasks will retry
+
+    // Permanent HubSpot client errors (4xx, e.g. INVALID_EMAIL) will never succeed on
+    // retry — returning 500 just spins the Cloud Tasks retry queue. Record the failure
+    // and ack with 200 so the task is dropped. Transient errors (5xx, network, 429)
+    // fall through to 500 and get retried.
+    if (err instanceof HubSpotApiError && err.isPermanent) {
+      await writeAuditLog({
+        portal_id: portalId.toString(),
+        install_id: portalId.toString(),
+        message_id: messageId,
+        conversation_id: threadId.toString(),
+        source_classified: null,
+        extraction_json: null,
+        confidence: null,
+        outcome: 'errored',
+        hubspot_contact_id: null,
+        created_at: Date.now(),
+      }).catch(e => console.error('Failed to write errored audit log', { messageId, e }));
+      console.log(`Permanent error — not retrying. messageId=${messageId} status=${err.status}`);
+      res.sendStatus(200);
+      return;
+    }
+
+    // Return 500 so Cloud Tasks will retry (transient failure)
     res.status(500).json({ error: 'Processing failed' });
   }
 });

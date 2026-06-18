@@ -23,10 +23,20 @@ interface Owner {
   value: string;
 }
 
+interface InboxOption {
+  label: string;
+  value: string;
+}
+
 interface Settings {
   review_owner_email: string | null;
   notes_enabled: boolean;
+  inbox_id: string | null;
 }
+
+// Sentinel value for the "process all inboxes" choice. The Select can't use an empty
+// string as a distinct option value, so we map this to inbox_id: null on save.
+const ALL_INBOXES = '__all__';
 
 interface SettingsExtensionProps {
   context: SettingsContext;
@@ -49,6 +59,9 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   const [reviewOwnerEmail, setReviewOwnerEmail] = useState('');
   const [notesEnabled, setNotesEnabled] = useState(true);
 
+  const [inboxes, setInboxes] = useState<InboxOption[]>([]);
+  const [selectedInbox, setSelectedInbox] = useState<string>(ALL_INBOXES);
+
   const [billingStatus, setBillingStatus] = useState<string>('none');
   const [billingTier, setBillingTier] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState<string>('starter');
@@ -58,10 +71,11 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch current settings, owners (first page), and billing status in parallel.
-        const [settingsRes, firstOwnersRes, billingRes] = await Promise.all([
+        // Fetch current settings, owners (first page), inboxes, and billing status in parallel.
+        const [settingsRes, firstOwnersRes, inboxesRes, billingRes] = await Promise.all([
           hubspot.fetch(`${CLOUD_RUN_URL}/settings?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/owners?portalId=${portalId}`),
+          hubspot.fetch(`${CLOUD_RUN_URL}/inboxes?portalId=${portalId}`),
           hubspot.fetch(`${CLOUD_RUN_URL}/billing/status?portalId=${portalId}`),
         ]);
 
@@ -110,6 +124,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
               const s = parsed as Partial<Settings>;
               setReviewOwnerEmail(s.review_owner_email ?? '');
               setNotesEnabled(typeof s.notes_enabled === 'boolean' ? s.notes_enabled : true);
+              setSelectedInbox(s.inbox_id ?? ALL_INBOXES);
             } else if (parsed !== null) {
               actions.addAlert({
                 type: 'danger',
@@ -169,6 +184,21 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
 
         setAllOwners(owners);
         setFilteredOwners(owners);
+
+        // Load the portal's conversations inboxes for the dropdown. A failure here is
+        // non-fatal — the user can still save other settings and keep "All inboxes".
+        if (inboxesRes?.ok) {
+          const data = (await inboxesRes.json().catch(() => null)) as {
+            results?: Array<{ id: string; name: string }>;
+          } | null;
+          setInboxes((data?.results ?? []).map(i => ({ label: i.name, value: i.id })));
+        } else if (inboxesRes) {
+          const body = await inboxesRes.text().catch(() => '');
+          actions.addAlert({
+            type: 'warning',
+            message: `Could not load inboxes (${inboxesRes.status}): ${body || 'no response body'}`,
+          });
+        }
       } catch {
         actions.addAlert({ type: 'danger', message: 'Failed to load settings.' });
       } finally {
@@ -232,6 +262,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
           settings: {
             review_owner_email: reviewOwnerEmail || null,
             notes_enabled: notesEnabled,
+            inbox_id: selectedInbox === ALL_INBOXES ? null : selectedInbox,
           },
         },
       });
@@ -254,6 +285,20 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   return (
     <Flex direction="column" gap="medium">
       <Heading>Processing</Heading>
+
+      <Select
+        label="Inbox to monitor"
+        value={selectedInbox}
+        options={[
+          { label: 'All inboxes', value: ALL_INBOXES },
+          ...inboxes,
+        ]}
+        onChange={value => setSelectedInbox(String(value))}
+      />
+      <Text variant="microcopy">
+        Only emails arriving in the selected inbox are turned into contacts. Choose “All
+        inboxes” to process every conversations inbox.
+      </Text>
 
       <Toggle
         label="Create a Note on Contact per email"
