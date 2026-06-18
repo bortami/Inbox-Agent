@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   hubspot,
+  Box,
   Button,
-  Divider,
   Flex,
   Heading,
   Link,
   LoadingSpinner,
   Select,
   Text,
+  Tile,
   Toggle,
 } from '@hubspot/ui-extensions';
 import type { ExtensionPointApiActions, SettingsContext } from '@hubspot/ui-extensions';
@@ -283,91 +284,104 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
   }
 
   return (
-    <Flex direction="column" gap="medium">
-      <Heading>Processing</Heading>
+    // Two side-by-side columns that each take half the width and wrap to stacked on
+    // narrow screens. Box flex={1} splits the row evenly; the Tile gives each section a
+    // visible bordered container instead of full-width stretched controls.
+    <Flex direction="row" gap="medium" wrap="wrap" align="start">
+      <Box flex={1}>
+        <Tile>
+          <Flex direction="column" gap="medium">
+            <Heading>Processing</Heading>
 
-      <Select
-        label="Inbox to monitor"
-        value={selectedInbox}
-        options={[
-          { label: 'All inboxes', value: ALL_INBOXES },
-          ...inboxes,
-        ]}
-        onChange={value => setSelectedInbox(String(value))}
-      />
-      <Text variant="microcopy">
-        Only emails arriving in the selected inbox are turned into contacts. Choose “All
-        inboxes” to process every conversations inbox.
-      </Text>
+            <Select
+              label="Inbox to monitor"
+              value={selectedInbox}
+              options={[
+                { label: 'All inboxes', value: ALL_INBOXES },
+                ...inboxes,
+              ]}
+              onChange={value => setSelectedInbox(String(value))}
+            />
+            <Text variant="microcopy">
+              Only emails arriving in the selected inbox are turned into contacts. Choose “All
+              inboxes” to process every conversations inbox.
+            </Text>
 
-      <Toggle
-        label="Create a Note on Contact per email"
-        checked={notesEnabled}
-        onChange={setNotesEnabled}
-      />
+            <Toggle
+              label="Create a Note on Contact per email"
+              checked={notesEnabled}
+              onChange={setNotesEnabled}
+            />
 
-      <Select
-        label="Assign low-confidence emails to"
-        placeholder="Search users…"
-        value={reviewOwnerEmail}
-        options={filteredOwners}
-        onChange={value => setReviewOwnerEmail(String(value))}
-        onInput={handleOwnerSearch}
-      />
+            <Select
+              label="Assign low-confidence emails to"
+              placeholder="Search users…"
+              value={reviewOwnerEmail}
+              options={filteredOwners}
+              onChange={value => setReviewOwnerEmail(String(value))}
+              onInput={handleOwnerSearch}
+            />
 
-      <Button variant="primary" onClick={save} disabled={saving}>
-        {saving ? 'Saving…' : 'Save settings'}
-      </Button>
+            <Button variant="primary" onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : 'Save settings'}
+            </Button>
+          </Flex>
+        </Tile>
+      </Box>
 
-      <Divider />
+      <Box flex={1}>
+        <Tile>
+          <Flex direction="column" gap="medium">
+            <Heading>Billing</Heading>
 
-      <Heading>Billing</Heading>
+            <Text>
+              Subscription status: <Text format={{ fontWeight: 'bold' }} inline>{billingStatus}</Text>
+              {billingTier && <> · Plan: <Text format={{ fontWeight: 'bold' }} inline>{billingTier}</Text></>}
+              {!isActive && '. Leads are not processed until your subscription is active.'}
+            </Text>
 
-      <Text>
-        Subscription status: <Text format={{ fontWeight: 'bold' }} inline>{billingStatus}</Text>
-        {billingTier && <> · Plan: <Text format={{ fontWeight: 'bold' }} inline>{billingTier}</Text></>}
-        {!isActive && '. Leads are not processed until your subscription is active.'}
-      </Text>
+            {hasCustomer ? (
+              <>
+                <Button onClick={() => fetchStripeUrl(`/billing/portal?portalId=${portalId}`)} disabled={billingBusy}>
+                  {billingBusy ? 'Preparing…' : 'Manage subscription'}
+                </Button>
+                <Text variant="microcopy">
+                  Change plan, update payment, or cancel in the Stripe billing portal.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Select
+                  label="Plan"
+                  value={selectedTier}
+                  options={[
+                    { label: 'Starter', value: 'starter' },
+                    { label: 'Growth', value: 'growth' },
+                    { label: 'Pro', value: 'pro' },
+                    { label: 'Enterprise', value: 'enterprise' },
+                  ]}
+                  onChange={value => setSelectedTier(String(value))}
+                />
+                <Button
+                  variant="primary"
+                  onClick={() => fetchStripeUrl(`/billing/checkout?portalId=${portalId}&tier=${selectedTier}&format=json`)}
+                  disabled={billingBusy}
+                >
+                  {billingBusy ? 'Preparing…' : 'Subscribe'}
+                </Button>
+              </>
+            )}
 
-      {hasCustomer ? (
-        <>
-          <Button onClick={() => fetchStripeUrl(`/billing/portal?portalId=${portalId}`)} disabled={billingBusy}>
-            {billingBusy ? 'Preparing…' : 'Manage subscription'}
-          </Button>
-          <Text variant="microcopy">
-            Change plan, update payment, or cancel in the Stripe billing portal.
-          </Text>
-        </>
-      ) : (
-        <>
-          <Select
-            label="Plan"
-            value={selectedTier}
-            options={[
-              { label: 'Starter', value: 'starter' },
-              { label: 'Growth', value: 'growth' },
-              { label: 'Pro', value: 'pro' },
-              { label: 'Enterprise', value: 'enterprise' },
-            ]}
-            onChange={value => setSelectedTier(String(value))}
-          />
-          <Button
-            variant="primary"
-            onClick={() => fetchStripeUrl(`/billing/checkout?portalId=${portalId}&tier=${selectedTier}&format=json`)}
-            disabled={billingBusy}
-          >
-            {billingBusy ? 'Preparing…' : 'Subscribe'}
-          </Button>
-        </>
-      )}
-
-      {stripeUrl && (
-        <Text>
-          <Link href={{ url: stripeUrl, external: true }}>
-            {hasCustomer ? 'Open the Stripe billing portal →' : 'Continue to secure Stripe checkout →'}
-          </Link>
-        </Text>
-      )}
+            {stripeUrl && (
+              <Text>
+                <Link href={{ url: stripeUrl, external: true }}>
+                  {hasCustomer ? 'Open the Stripe billing portal →' : 'Continue to secure Stripe checkout →'}
+                </Link>
+              </Text>
+            )}
+          </Flex>
+        </Tile>
+      </Box>
     </Flex>
   );
 };
