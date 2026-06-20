@@ -68,7 +68,10 @@ export class ClaudeExtractor implements AIExtractor {
   private client: Anthropic;
 
   constructor() {
-    this.client = new Anthropic();
+    // maxRetries above the default 2 — transient connection drops to the Anthropic
+    // API (e.g. "Premature close" when a socket closes mid-response) are retried
+    // automatically with backoff.
+    this.client = new Anthropic({ maxRetries: 4 });
   }
 
   async extract(emailText: string, sourceHint?: string): Promise<ExtractionResult> {
@@ -76,7 +79,12 @@ export class ClaudeExtractor implements AIExtractor {
       ? `Source: ${sourceHint}\n\n---\n\n${emailText}`
       : emailText;
 
-    const response = await this.client.messages.create({
+    // Stream rather than a single blocking create(). A non-streamed request holds one
+    // socket open for the model's full generation; on Cloud Run that connection can be
+    // severed mid-response, surfacing as "FetchError: Premature close". Streaming keeps
+    // the connection active and avoids the timeout. finalMessage() returns the same
+    // Message shape, so downstream handling is unchanged.
+    const stream = this.client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: [
@@ -90,6 +98,7 @@ export class ClaudeExtractor implements AIExtractor {
       tool_choice: { type: 'tool', name: 'extract_lead' },
       messages: [{ role: 'user', content: userContent }],
     });
+    const response = await stream.finalMessage();
 
     const toolUseBlock = response.content.find(
       (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
