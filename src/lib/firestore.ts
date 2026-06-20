@@ -40,10 +40,18 @@ export async function createDedupeKey(
   });
 }
 
+// Audit log entries retain buyer PII (in extraction_json), so they expire on a rolling
+// 90-day window via a Firestore TTL policy. The policy can only target a Timestamp field,
+// so we stamp `ttl_at` here (same pattern as installStates). Uninstall still hard-deletes
+// the whole portal's audit log immediately via deletePortalData — this TTL bounds the data
+// for portals that stay installed.
+const AUDIT_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
+
 export async function writeAuditLog(entry: AuditLog): Promise<string> {
   const ref = await getDb().collection('auditLog').add({
     ...entry,
     created_at: FieldValue.serverTimestamp(),
+    ttl_at: new Date(Date.now() + AUDIT_LOG_RETENTION_MS),
   });
   return ref.id;
 }

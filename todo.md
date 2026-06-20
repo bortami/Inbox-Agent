@@ -92,7 +92,7 @@ Goal: register LeadCatch as a first-class Breeze AI participant — a strong dif
 - [x] Add `classify_source` tool (`GENERATE`): runs the source classifier on pasted email text; returns source name and confidence
 - [x] Register all tools in `src/app/workflow-actions/` with `*-hsmeta.json` config (`supportedClients: ["AGENTS"]`, `llmConfig.actionDescription`)
 - [x] Verify `X-HubSpot-Signature` on all tool `actionUrl` routes (same logic as webhook receiver)
-- [ ] Test each tool with the HubSpot Developer Tool Testing Agent
+- [x] Test each tool with the HubSpot Developer Tool Testing Agent
 
 ## Phase 5 — Marketplace Submission Prep
 
@@ -101,8 +101,9 @@ Goal: assemble every asset HubSpot requires to list and certify the app. Nothing
 - [ ] App listing copy and screenshots (HubSpot brand rules: capital "S" in "HubSpot"; do not use "Hub" in the app name)
 - [ ] Demo video: full install → configure → use → disconnect → uninstall flow (required for certification review — HubSpot will not review without it)
 - [ ] Setup documentation on a live, public URL (no login wall): install steps with scope-approval screenshot, configure, use, disconnect, uninstall — must include current HubSpot UI screenshots
-- [ ] Privacy policy (live, GDPR-compliant URL)
-- [ ] Terms of service (live URL — separate from privacy policy; both required in listing)
+- [ ] **Enable the Firestore TTL policy on `auditLog.ttl_at`** (90-day retention). The `ttl_at` field is written in code ([src/lib/firestore.ts](src/lib/firestore.ts)); the policy must be enabled in GCP (console/gcloud) for entries to actually expire. The Privacy Policy's 90-day retention claim depends on this. Spec: [docs/LEGAL_DOCS_SPEC.md](docs/LEGAL_DOCS_SPEC.md).
+- [ ] Privacy policy (live, GDPR-compliant URL) — **LeadCatch-specific**; the existing Red Anthos policy does not cover this product. Must describe the HubSpot data LeadCatch reads (Conversations email bodies) and writes (Contacts, Notes). Audit log retention = 90 days (see above).
+- [ ] Terms of service (live URL — separate from privacy policy; both required in listing) — **LeadCatch-specific**, same note as above.
 - [ ] Pricing page on external website (listing pricing must match; use free/freemium if offering a no-cost tier)
 - [ ] Support contact method (required listing field)
 - [ ] "Shared data" table in listing: accurately maps each OAuth scope to data flowing in/out (bi-directional where applicable)
@@ -138,7 +139,7 @@ Goal: gate access behind a paid subscription, bill per-lead usage, and handle th
 - [x] Settings page: billing status + Subscribe/Manage buttons opening Stripe in a new tab (Stripe blocks iframing)
 - [ ] **Set up in Stripe dashboard:** one meter (`event_name: lead_processed`); one product with a flat + metered price per tier (Starter/Growth/Pro/Enterprise); Billing Portal config with plan-switching across all 4 tiers
 - [ ] **Set env/secrets** (outside deploy.sh): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, the 8 per-tier `STRIPE_PRICE_<TIER>_FLAT/_METERED`, optional `STRIPE_PORTAL_LOGIN_URL` (static fallback), `STRIPE_DEFAULT_TIER`, `BILLING_GRACE_DAYS`
-- [ ] **Add Firestore composite index** for the sweep query: `billing` collection, `status` (==) + `detached_at` (<=)
+- [ ] **Add Firestore composite index** for the sweep query: `billing` collection, `status` (==) + `detached_at` (<=). The grace-period sweep code (`sweepDetachedBilling()`, run on every `/journal/sync` tick) is implemented and wired — this index + `BILLING_GRACE_DAYS` are the only remaining pieces for it to function.
 - [ ] Register the Stripe webhook endpoint (`/billing/webhook`) in the Stripe dashboard and store its signing secret
 - [ ] Universal customer portal across all Red Anthos products — lives in the Red Anthos Dev site, not this app
 

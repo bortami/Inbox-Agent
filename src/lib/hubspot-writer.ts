@@ -117,7 +117,7 @@ export async function upsertContact(
     accessToken,
     '/crm/objects/2026-03/contacts/batch/upsert',
     {
-      inputs: [{ idProperty: 'email', id: extraction.email, properties }],
+      inputs: [{ idProperty: 'email', id: email, properties }],
     },
   );
 
