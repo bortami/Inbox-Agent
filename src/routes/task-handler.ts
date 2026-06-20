@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { dedupeKeyExists, createDedupeKey, writeAuditLog, getPortal, getBilling } from '../lib/firestore.js';
 import { getValidToken } from '../lib/token-store.js';
-import { fetchMessageText, assignThread, fetchThreadInboxId } from '../lib/hubspot-conversations.js';
+import { fetchMessageText, assignThread, fetchThreadInboxId, postThreadComment } from '../lib/hubspot-conversations.js';
 import { upsertContact, createNote, normalizeEmail, HubSpotApiError } from '../lib/hubspot-writer.js';
 import { isBillingActive, recordLeadUsage } from '../lib/stripe.js';
 import { getExtractor } from '../ai/extractor-factory.js';
@@ -23,6 +23,16 @@ function buildDedupeKey(installId: string, email: string, listingRef: string): s
 function getListingRef(lr: { vin?: string; stock_number?: string; url?: string; title?: string } | null): string {
   if (!lr) return '';
   return lr.vin ?? lr.stock_number ?? lr.url ?? lr.title ?? '';
+}
+
+// Internal comment posted back on the thread so an agent viewing the aggregator
+// conversation (cars.com, autotrader.com) can jump to the real buyer Contact LeadCatch
+// created — the thread itself stays associated with the aggregator and can't be
+// repointed. 0-1 is the contacts object type id in the record URL.
+function contactCommentText(portalId: number, contactId: string, name: string | null): string {
+  const url = `https://app.hubspot.com/contacts/${portalId}/record/0-1/${contactId}`;
+  const who = name ? ` for ${name}` : '';
+  return `LeadCatch created/updated the contact${who} from this email: ${url}`;
 }
 
 taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
@@ -154,6 +164,16 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
     if (portal?.settings?.notes_enabled !== false) {
       await createNote(token, contactId, extraction, portalId, threadId);
     }
+
+    // Post an internal comment back on the thread linking to the contact. The thread
+    // stays associated with the aggregator (cars.com etc.) and can't be repointed, so
+    // this is the agent's only in-conversation pointer to the real buyer record. Always
+    // on (independent of notes_enabled) and best-effort: the contact is already written,
+    // so a failed comment must not fail the task or trigger a re-bill on retry.
+    const fullName = [extraction.firstname, extraction.lastname].filter(Boolean).join(' ') || null;
+    await postThreadComment(token, threadId, contactCommentText(portalId, contactId, fullName)).catch(err =>
+      console.warn(`Failed to post contact link comment to thread ${threadId}`, err),
+    );
 
     // Mark dedupe key and write audit log only after successful HubSpot writes
     await createDedupeKey(dedupeKey, portalId.toString(), messageId);

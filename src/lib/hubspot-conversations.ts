@@ -68,6 +68,34 @@ export async function fetchMessageText(
   throw new Error(`Message ${messageId} has no text content`);
 }
 
+// Posts an internal COMMENT to a thread. Comments are visible only to agents in the
+// inbox — never sent to the visitor — so they're safe for linking back to the Contact
+// LeadCatch created. Inbound dealer emails always come from generic aggregator
+// addresses (noreply@cars.com, leads@autotrader.com), so HubSpot's auto-created thread
+// contact is the aggregator, not the buyer; a thread's associatedContactId is
+// system-owned and can't be repointed via the API. This comment is how an agent gets
+// from the aggregator thread to the real buyer Contact.
+export async function postThreadComment(
+  accessToken: string,
+  threadId: number,
+  text: string,
+): Promise<void> {
+  const res = await fetch(
+    `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type: 'COMMENT', text }),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to post comment to thread ${threadId}: ${res.status} ${await res.text()}`);
+  }
+}
+
 export async function assignThread(
   accessToken: string,
   threadId: number,
