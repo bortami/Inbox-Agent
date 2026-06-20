@@ -366,14 +366,14 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
             <Text>
               Subscription status: <Text format={{ fontWeight: 'bold' }} inline>{billingStatus}</Text>
               {billingTier && <> · Plan: <Text format={{ fontWeight: 'bold' }} inline>{billingTier}</Text></>}
-              {!isActive && '. Leads are not processed until your subscription is active.'}
+              {!isActive && '. Emails are not processed until your subscription is active.'}
             </Text>
 
             {usageUsed !== null && (
               <>
                 <Statistics>
                   <StatisticsItem
-                    label="Leads used this month"
+                    label="Emails processed this month"
                     number={String(usageUsed)}
                   >
                     {usageAllotted !== null ? `of ${usageAllotted} included` : undefined}
@@ -387,8 +387,8 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
                     maxValue={usageAllotted}
                     showPercentage={true}
                     variant={usageVariant(usageUsed, usageAllotted)}
-                    valueDescription={`${usageUsed} out of ${usageAllotted} leads`}
-                    aria-label="Leads used this month"
+                    valueDescription={`${usageUsed} out of ${usageAllotted} emails`}
+                    aria-label="Emails processed this month"
                   />
                 )}
               </>
@@ -400,7 +400,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
                   {billingBusy ? 'Preparing…' : 'Manage subscription'}
                 </Button>
                 <Text variant="microcopy">
-                  Change plan, update payment, or cancel in the Stripe billing portal.
+                  Change plan, update payment, or cancel in the Red Anthos billing portal.
                 </Text>
               </>
             ) : (
@@ -429,7 +429,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
             {stripeUrl && (
               <Text>
                 <Link href={{ url: stripeUrl, external: true }}>
-                  {hasCustomer ? 'Open the Stripe billing portal →' : 'Continue to secure Stripe checkout →'}
+                  {hasCustomer ? 'Open the Red Anthos billing portal →' : 'Continue to secure checkout →'}
                 </Link>
               </Text>
             )}
