@@ -15,14 +15,13 @@ const verifyCloudTasks = verifyGoogleOidcToken(
   [process.env.SERVICE_ACCOUNT_EMAIL!],
 );
 
-function buildDedupeKey(installId: string, email: string, listingRef: string): string {
-  const hourBucket = Math.floor(Date.now() / (1000 * 60 * 60));
-  return `${installId}|${email}|${listingRef}|${hourBucket}`;
-}
-
-function getListingRef(lr: { vin?: string; stock_number?: string; url?: string; title?: string } | null): string {
-  if (!lr) return '';
-  return lr.vin ?? lr.stock_number ?? lr.url ?? lr.title ?? '';
+// Dedupe is keyed per thread: each conversation is processed (and billed) exactly once,
+// on its first message. Later replies on the same thread are skipped — our job is initial
+// processing only. This also suppresses Cloud Tasks retries (same thread). A second
+// inquiry from the same buyer about the same car arrives as a *new* thread, so it is a
+// distinct key and gets processed and commented on its own.
+function buildDedupeKey(installId: string, threadId: number): string {
+  return `${installId}|${threadId}`;
 }
 
 function escapeHtml(s: string): string {
@@ -188,9 +187,8 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
       return;
     }
 
-    // Dedupe check: scoped to this install to avoid cross-install collisions on quick reinstall
-    const listingRef = getListingRef(extraction.listing_reference);
-    const dedupeKey = buildDedupeKey(installId, email, listingRef);
+    // Dedupe check: per thread, so each conversation is processed and billed once.
+    const dedupeKey = buildDedupeKey(installId, threadId);
 
     if (await dedupeKeyExists(dedupeKey)) {
       await writeAuditLog({ ...auditBase, message_id: messageId, outcome: 'skipped' });

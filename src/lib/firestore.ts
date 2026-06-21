@@ -26,6 +26,13 @@ export async function dedupeKeyExists(key: string): Promise<boolean> {
   return doc.exists;
 }
 
+// Dedupe keys are per-thread (see buildDedupeKey), so a doc marks "this thread has been
+// processed." We keep it for 90 days so later replies on the same thread stay deduped —
+// our job is initial processing only. The Firestore TTL policy must target `ttl_at` (same
+// pattern as auditLog); a Timestamp field is required for TTL. created_at is kept for
+// debugging.
+const DEDUPE_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
+
 export async function createDedupeKey(
   key: string,
   portalId: string,
@@ -34,9 +41,8 @@ export async function createDedupeKey(
   await getDb().collection('dedupeKeys').doc(key).set({
     portal_id: portalId,
     message_id: messageId,
-    // Firestore TTL policy on this collection expires documents after 24h
-    // based on the created_at field — configured via GCP Console or gcloud
     created_at: FieldValue.serverTimestamp(),
+    ttl_at: new Date(Date.now() + DEDUPE_RETENTION_MS),
   });
 }
 
