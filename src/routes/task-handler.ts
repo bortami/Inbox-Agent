@@ -25,14 +25,31 @@ function getListingRef(lr: { vin?: string; stock_number?: string; url?: string; 
   return lr.vin ?? lr.stock_number ?? lr.url ?? lr.title ?? '';
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Internal comment posted back on the thread so an agent viewing the aggregator
 // conversation (cars.com, autotrader.com) can jump to the real buyer Contact LeadCatch
 // created — the thread itself stays associated with the aggregator and can't be
-// repointed. 0-1 is the contacts object type id in the record URL.
-function contactCommentText(portalId: number, contactId: string, name: string | null): string {
+// repointed. 0-1 is the contacts object type id in the record URL. Returns the
+// plain-text fallback and the HTML (richText) the inbox renders — the link is only
+// clickable as an <a href> in the HTML.
+function contactComment(
+  portalId: number,
+  contactId: string,
+  name: string | null,
+): { text: string; richText: string } {
   const url = `https://app.hubspot.com/contacts/${portalId}/record/0-1/${contactId}`;
   const who = name ? ` for ${name}` : '';
-  return `LeadCatch created/updated the contact${who} from this email: ${url}`;
+  return {
+    text: `LeadCatch created/updated the contact${who} from this email: ${url}`,
+    richText: `LeadCatch created/updated the contact${escapeHtml(who)} from this email: <a href="${url}">View contact</a>`,
+  };
 }
 
 taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
@@ -171,7 +188,8 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
     // on (independent of notes_enabled) and best-effort: the contact is already written,
     // so a failed comment must not fail the task or trigger a re-bill on retry.
     const fullName = [extraction.firstname, extraction.lastname].filter(Boolean).join(' ') || null;
-    await postThreadComment(token, threadId, contactCommentText(portalId, contactId, fullName)).catch(err =>
+    const comment = contactComment(portalId, contactId, fullName);
+    await postThreadComment(token, threadId, comment.text, comment.richText).catch(err =>
       console.warn(`Failed to post contact link comment to thread ${threadId}`, err),
     );
 

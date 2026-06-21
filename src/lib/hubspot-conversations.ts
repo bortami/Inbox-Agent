@@ -1,4 +1,5 @@
 import { htmlToText } from './html-to-text.js';
+import { HubSpotApiError } from './hubspot-writer.js';
 
 interface MessageResponse {
   text?: string;
@@ -18,7 +19,11 @@ async function getJson<T>(accessToken: string, path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`GET ${path} failed: ${res.status} ${await res.text()}`);
+    // Throw HubSpotApiError (carrying the status) rather than a plain Error so the task
+    // handler can drop permanent failures instead of retrying them. A 404 here means the
+    // thread is gone — common for phantom/expired webhook objectIds — and will never
+    // succeed on retry; the handler's isPermanent check acks it with 200.
+    throw new HubSpotApiError(res.status, `GET ${path} failed: ${res.status} ${await res.text()}`);
   }
 
   return res.json() as Promise<T>;
@@ -75,10 +80,15 @@ export async function fetchMessageText(
 // contact is the aggregator, not the buyer; a thread's associatedContactId is
 // system-owned and can't be repointed via the API. This comment is how an agent gets
 // from the aggregator thread to the real buyer Contact.
+//
+// `text` is the plain-text fallback; `richText` is the HTML the inbox actually renders.
+// The contact link is only clickable when it's an <a href> in richText — a bare URL in
+// text renders as non-clickable plain text.
 export async function postThreadComment(
   accessToken: string,
   threadId: number,
   text: string,
+  richText: string,
 ): Promise<void> {
   const res = await fetch(
     `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
@@ -88,7 +98,7 @@ export async function postThreadComment(
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ type: 'COMMENT', text }),
+      body: JSON.stringify({ type: 'COMMENT', text, richText }),
     },
   );
   if (!res.ok) {
