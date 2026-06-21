@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { dedupeKeyExists, createDedupeKey, writeAuditLog, getPortal, getBilling } from '../lib/firestore.js';
 import { getValidToken } from '../lib/token-store.js';
 import { fetchMessageText, assignThread, fetchThreadInboxId, postThreadComment, resolveOwnerActorId } from '../lib/hubspot-conversations.js';
-import { upsertContact, createNote, normalizeEmail, HubSpotApiError } from '../lib/hubspot-writer.js';
+import { upsertContact, createEmailEngagement, normalizeEmail, HubSpotApiError } from '../lib/hubspot-writer.js';
 import { isBillingActive, recordLeadUsage } from '../lib/stripe.js';
 import { getExtractor } from '../ai/extractor-factory.js';
 import { verifyGoogleOidcToken } from '../lib/verify-google-oidc.js';
@@ -199,8 +199,10 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
 
     // Write to HubSpot
     const contactId = await upsertContact(token, extraction);
+    // notes_enabled gates activity logging (now an Email engagement, not a Note); the
+    // setting name is retained to avoid a Settings migration.
     if (portal?.settings?.notes_enabled !== false) {
-      await createNote(token, contactId, extraction, portalId, threadId);
+      await createEmailEngagement(token, contactId, extraction, emailText, portalId, threadId);
     }
 
     // Post an internal comment back on the thread linking to the contact. The thread

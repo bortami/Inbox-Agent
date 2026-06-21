@@ -337,7 +337,7 @@ const SettingsPage = ({ context, actions }: SettingsExtensionProps) => {
             </Text>
 
             <Toggle
-              label="Create a Note on Contact per email"
+              label="Create an activity record per email on the contact timeline."
               checked={notesEnabled}
               onChange={setNotesEnabled}
             />

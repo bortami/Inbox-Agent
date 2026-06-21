@@ -1,14 +1,14 @@
 import type { ExtractionResult } from '../ai/types.js';
 
-// associationTypeId 202 = note_to_contact (HUBSPOT_DEFINED)
-const NOTE_TO_CONTACT_ASSOC = 202;
+// associationTypeId 198 = email_to_contact (HUBSPOT_DEFINED)
+const EMAIL_TO_CONTACT_ASSOC = 198;
 
 interface UpsertResponse {
   results: Array<{ id: string }>;
   status: string;
 }
 
-interface NoteResponse {
+interface EngagementResponse {
   id: string;
 }
 
@@ -54,28 +54,41 @@ function listingRefValue(lr: ExtractionResult['listing_reference']): string | un
   return undefined;
 }
 
-function formatNoteBody(
-  extraction: ExtractionResult,
-  portalId: number,
-  threadId: number,
-): string {
-  const lines: string[] = [];
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
-  lines.push(`Confidence: ${extraction.confidence}`);
-  lines.push('');
-  lines.push('Message:');
-  lines.push(extraction.message);
+function conversationUrl(portalId: number, threadId: number): string {
+  return `https://app.hubspot.com/live-messages/${portalId}/inbox/${threadId}`;
+}
 
-  const ref = listingRefValue(extraction.listing_reference);
-  if (ref) {
-    lines.push('');
-    lines.push(`Listing: ${ref}`);
-  }
+// Subject for the logged email activity. The extraction has no real subject line, so we
+// synthesize one from the lead's name (falling back to source, then a generic label) so
+// the timeline entry reads meaningfully.
+function emailSubject(extraction: ExtractionResult): string {
+  const name = [extraction.firstname, extraction.lastname].filter(Boolean).join(' ').trim();
+  if (name) return `New inquiry from ${name}`;
+  if (extraction.source) return `New lead via ${extraction.source.trim()}`;
+  return 'New inbound lead inquiry';
+}
 
-  lines.push('');
-  lines.push(`Portal: ${portalId}  |  Conversation ID: ${threadId}`);
+// HTML body for hs_email_html — the full original email content followed by a clickable
+// "View original conversation" link. The raw email is escaped (and newlines converted to
+// <br>) so it renders faithfully and can't break the markup or inject tags.
+function emailBodyHtml(emailText: string, portalId: number, threadId: number): string {
+  const body = escapeHtml(emailText).replace(/\n/g, '<br>');
+  const link = `<a href="${conversationUrl(portalId, threadId)}">View original conversation</a>`;
+  return `${body}<br><br>${link}`;
+}
 
-  return lines.join('\n');
+// Plain-text body for hs_email_text — the full original email content plus the raw
+// conversation URL.
+function emailBodyText(emailText: string, portalId: number, threadId: number): string {
+  return `${emailText}\n\nOriginal conversation: ${conversationUrl(portalId, threadId)}`;
 }
 
 // Returns a normalized, valid email or null. The AI extractor sometimes emits
@@ -129,22 +142,27 @@ export async function upsertContact(
   return contactId;
 }
 
-export async function createNote(
+// Logs the inbound lead as an Email engagement on the contact, so it appears in the
+// contact's email timeline. Direction is INCOMING_EMAIL (these are buyer emails arriving
+// in the inbox). The HTML body carries the clickable "View original conversation" link.
+export async function createEmailEngagement(
   accessToken: string,
   contactId: string,
   extraction: ExtractionResult,
+  emailText: string,
   portalId: number,
   threadId: number,
 ): Promise<string> {
-  const noteBody = formatNoteBody(extraction, portalId, threadId);
-
-  const note = await hsPost<NoteResponse>(
+  const email = await hsPost<EngagementResponse>(
     accessToken,
-    '/crm/objects/2026-03/notes',
+    '/crm/objects/2026-03/emails',
     {
       properties: {
         hs_timestamp: new Date().toISOString(),
-        hs_note_body: noteBody,
+        hs_email_direction: 'INCOMING_EMAIL',
+        hs_email_subject: emailSubject(extraction),
+        hs_email_html: emailBodyHtml(emailText, portalId, threadId),
+        hs_email_text: emailBodyText(emailText, portalId, threadId),
       },
       associations: [
         {
@@ -152,7 +170,7 @@ export async function createNote(
           types: [
             {
               associationCategory: 'HUBSPOT_DEFINED',
-              associationTypeId: NOTE_TO_CONTACT_ASSOC,
+              associationTypeId: EMAIL_TO_CONTACT_ASSOC,
             },
           ],
         },
@@ -160,5 +178,5 @@ export async function createNote(
     },
   );
 
-  return note.id;
+  return email.id;
 }
