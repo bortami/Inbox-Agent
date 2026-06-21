@@ -106,6 +106,27 @@ export async function postThreadComment(
   }
 }
 
+// Resolves a HubSpot user's email to the agent actor ID the assignee endpoint expects
+// (`A-{userId}`). The Settings page stores only the review owner's email, but a thread
+// assignee must be an actor ID, not an email — so we look the owner up in /crm/v3/owners
+// and build the actor from their userId. Returns null if no owner matches the email or
+// the owner has no userId (e.g. an integration/queue owner).
+export async function resolveOwnerActorId(
+  accessToken: string,
+  email: string,
+): Promise<string | null> {
+  const url = new URL('https://api.hubapi.com/crm/v3/owners');
+  url.searchParams.set('email', email);
+  url.searchParams.set('limit', '1');
+
+  const data = await getJson<{ results?: Array<{ userId?: number | null }> }>(
+    accessToken,
+    url.pathname + url.search,
+  );
+  const userId = data.results?.[0]?.userId;
+  return userId ? `A-${userId}` : null;
+}
+
 export async function assignThread(
   accessToken: string,
   threadId: number,
@@ -114,7 +135,8 @@ export async function assignThread(
   const res = await fetch(
     `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/assignee`,
     {
-      method: 'POST',
+      // PUT, not POST — the assignee endpoint is PUT; POST returns 405.
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',

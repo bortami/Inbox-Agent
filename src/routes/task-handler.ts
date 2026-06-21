@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { dedupeKeyExists, createDedupeKey, writeAuditLog, getPortal, getBilling } from '../lib/firestore.js';
 import { getValidToken } from '../lib/token-store.js';
-import { fetchMessageText, assignThread, fetchThreadInboxId, postThreadComment } from '../lib/hubspot-conversations.js';
+import { fetchMessageText, assignThread, fetchThreadInboxId, postThreadComment, resolveOwnerActorId } from '../lib/hubspot-conversations.js';
 import { upsertContact, createNote, normalizeEmail, HubSpotApiError } from '../lib/hubspot-writer.js';
 import { isBillingActive, recordLeadUsage } from '../lib/stripe.js';
 import { getExtractor } from '../ai/extractor-factory.js';
@@ -50,6 +50,39 @@ function contactComment(
     text: `LeadCatch created/updated the contact${who} from this email: ${url}`,
     richText: `LeadCatch created/updated the contact${escapeHtml(who)} from this email: <a href="${url}">View contact</a>`,
   };
+}
+
+// Routes a thread to the portal's review owner: resolves the owner's email to an actor
+// ID, assigns the thread, and posts an internal comment explaining why it was flagged so
+// the assigned agent has context. All steps are best-effort — review routing must never
+// fail the task (which would trigger a Cloud Tasks retry). `reason` is a short
+// human-readable cause (e.g. "no email address could be extracted").
+async function routeForReview(
+  token: string,
+  threadId: number,
+  reviewEmail: string | null | undefined,
+  reason: string,
+): Promise<void> {
+  const text = `LeadCatch flagged this conversation for review: ${reason}.`;
+  await postThreadComment(token, threadId, text, escapeHtml(text)).catch(err =>
+    console.warn(`Failed to post review comment to thread ${threadId}`, err),
+  );
+
+  if (!reviewEmail) {
+    console.warn(`No review_owner_email configured — thread ${threadId} flagged but unassigned`);
+    return;
+  }
+
+  try {
+    const actorId = await resolveOwnerActorId(token, reviewEmail);
+    if (!actorId) {
+      console.warn(`Could not resolve review owner ${reviewEmail} to an actor — thread ${threadId} unassigned`);
+      return;
+    }
+    await assignThread(token, threadId, actorId);
+  } catch (err) {
+    console.warn(`Failed to assign thread ${threadId} for review`, err);
+  }
 }
 
 taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
@@ -136,12 +169,7 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
     // Low-confidence leads queue for human review instead of writing to HubSpot
     if (extraction.confidence === 'low') {
       await writeAuditLog({ ...auditBase, message_id: messageId, outcome: 'queued_for_review' });
-      const reviewEmail = portal?.settings?.review_owner_email;
-      if (reviewEmail) {
-        await assignThread(token, threadId, reviewEmail).catch(err =>
-          console.warn(`Failed to assign thread ${threadId} for review`, err),
-        );
-      }
+      await routeForReview(token, threadId, portal?.settings?.review_owner_email, 'the lead data was low confidence');
       console.log(`Queued for review (low confidence) — messageId=${messageId}`);
       res.sendStatus(200);
       return;
@@ -154,12 +182,7 @@ taskRouter.post('/process', verifyCloudTasks, async (req, res) => {
     const email = normalizeEmail(extraction.email);
     if (!email) {
       await writeAuditLog({ ...auditBase, message_id: messageId, outcome: 'queued_for_review' });
-      const reviewEmail = portal?.settings?.review_owner_email;
-      if (reviewEmail) {
-        await assignThread(token, threadId, reviewEmail).catch(err =>
-          console.warn(`Failed to assign thread ${threadId} for review`, err),
-        );
-      }
+      await routeForReview(token, threadId, portal?.settings?.review_owner_email, 'no email address could be extracted');
       console.log(`Queued for review (no/invalid email) — messageId=${messageId}`);
       res.sendStatus(200);
       return;
