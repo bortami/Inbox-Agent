@@ -41,7 +41,7 @@ body{font-family:Arial,sans-serif;color:#222;font-size:14px;margin:0;padding:0;b
       <div class="field-row"><span class="field-label">Mileage:</span><span class="field-value">19,750 mi</span></div>
     </div>
     <div class="section-title">Lead Information</div>
-    <div class="field-row"><span class="field-label">Name:</span><span class="field-value">Priya Anand</span></div>
+    <div class="field-row"><span class="field-label">Name:</span><span class="field-value">-/span></div>
     <div class="field-row"><span class="field-label">Email:</span><span class="field-value">priya.anand@gmail.com</span></div>
     <div class="field-row"><span class="field-label">Phone:</span><span class="field-value">(408) 555-0973</span></div>
     <div class="field-row"><span class="field-label">Lead Type:</span><span class="field-value">Price Quote Request</span></div>

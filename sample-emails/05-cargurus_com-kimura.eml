@@ -42,7 +42,7 @@ body{font-family:Arial,sans-serif;color:#222;font-size:14px;margin:0;padding:0;b
     </div>
     <div class="section-title">Lead Information</div>
     <div class="field-row"><span class="field-label">Name:</span><span class="field-value">Robert Kimura</span></div>
-    <div class="field-row"><span class="field-label">Email:</span><span class="field-value">rob.kimura@yahoo.com</span></div>
+    <div class="field-row"><span class="field-label">Email:</span><span class="field-value">rob.kimura</span></div>
     <div class="field-row"><span class="field-label">Phone:</span><span class="field-value">(503) 555-0264</span></div>
     <div class="field-row"><span class="field-label">Lead Type:</span><span class="field-value">Price Quote Request</span></div>
     <div class="field-row"><span class="field-label">Source:</span><span class="field-value">CarGurus.com</span></div>
